@@ -1,0 +1,29 @@
+name: Back-merge main into develop
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open (or reuse) the sync PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Skip if a back-merge PR is already open.
+          if [ -n "$(gh pr list --repo "$REPO" --base develop --head main --state open --json number --jq '.[].number')" ]; then
+            echo "Back-merge PR already open."
+            exit 0
+          fi
+          # Open a main -> develop PR; no-op if develop already contains main.
+          gh pr create --repo "$REPO" --base develop --head main \
+            --title "Back-merge: main → develop" \
+            --body "Automated PR keeping develop in sync with main (releases/hotfixes). Merge with a merge commit (not squash) to preserve history." \
+            || echo "Nothing to back-merge (develop already up to date)."

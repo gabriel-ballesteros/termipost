@@ -51,6 +51,7 @@ release:
 # wired in .github/workflows/release.yml.
 brews:
   - name: termipost
+    directory: Formula
     repository:
       owner: gabriel-ballesteros
       name: homebrew-tap

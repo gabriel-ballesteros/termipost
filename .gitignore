@@ -27,6 +27,24 @@ go.work.sum
 # env file
 .env
 
+# Built binary
+/termipost
+
+# Project tooling
+.claude/
+
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini

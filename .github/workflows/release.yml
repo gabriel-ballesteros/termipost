@@ -25,6 +25,6 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Needed only when the Homebrew `brews` block is enabled: a token with
-          # write access to the homebrew-tap repo.
-          # HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          # Token with write access to the homebrew-tap repo, used by the
+          # `brews` block in .goreleaser.yaml to publish the formula.
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

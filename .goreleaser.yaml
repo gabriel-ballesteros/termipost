@@ -44,18 +44,19 @@ release:
     owner: gabriel-ballesteros
     name: termipost
 
-# Homebrew tap publishing. Enable once you have created a tap repo named
-# `homebrew-tap` and a token that can write to it (see release.yml). Then
-# uncomment and `brew install gabriel-ballesteros/tap/termipost` will work.
-#
-# brews:
-#   - name: termipost
-#     repository:
-#       owner: gabriel-ballesteros
-#       name: homebrew-tap
-#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-#     homepage: "https://github.com/gabriel-ballesteros/termipost"
-#     description: "A Postman-like HTTP client for the terminal."
-#     license: "MIT"
-#     test: |
-#       system "#{bin}/termipost", "--version"
+# Homebrew tap publishing. On each release, GoReleaser pushes/updates a formula
+# in the gabriel-ballesteros/homebrew-tap repo so users can:
+#   brew install gabriel-ballesteros/tap/termipost
+# Requires the HOMEBREW_TAP_TOKEN env (a token with write access to the tap repo)
+# wired in .github/workflows/release.yml.
+brews:
+  - name: termipost
+    repository:
+      owner: gabriel-ballesteros
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/gabriel-ballesteros/termipost"
+    description: "A Postman-like HTTP client for the terminal."
+    license: "MIT"
+    test: |
+      system "#{bin}/termipost", "--version"

@@ -1,0 +1,61 @@
+# GoReleaser configuration. Docs: https://goreleaser.com
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: termipost
+    main: .
+    binary: termipost
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+
+release:
+  github:
+    owner: gabriel-ballesteros
+    name: termipost
+
+# Homebrew tap publishing. Enable once you have created a tap repo named
+# `homebrew-tap` and a token that can write to it (see release.yml). Then
+# uncomment and `brew install gabriel-ballesteros/tap/termipost` will work.
+#
+# brews:
+#   - name: termipost
+#     repository:
+#       owner: gabriel-ballesteros
+#       name: homebrew-tap
+#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+#     homepage: "https://github.com/gabriel-ballesteros/termipost"
+#     description: "A Postman-like HTTP client for the terminal."
+#     license: "MIT"
+#     test: |
+#       system "#{bin}/termipost", "--version"

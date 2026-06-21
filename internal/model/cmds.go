@@ -5,9 +5,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
-	"github.com/gbrlballesteros/termipost/internal/httpclient"
-	"github.com/gbrlballesteros/termipost/internal/runner"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/httpclient"
+	"github.com/gabriel-ballesteros/termipost/internal/runner"
 )
 
 // sendResultMsg carries the outcome of an HTTP send.

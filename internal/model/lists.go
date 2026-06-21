@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/gbrlballesteros/termipost/internal/ui"
+	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
 // simpleItem is a list row carrying a stable id plus display text.

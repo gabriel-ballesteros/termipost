@@ -8,8 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/model"
-	"github.com/gbrlballesteros/termipost/internal/store"
+	"github.com/gabriel-ballesteros/termipost/internal/model"
+	"github.com/gabriel-ballesteros/termipost/internal/store"
 )
 
 func main() {

@@ -13,10 +13,10 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
-	"github.com/gbrlballesteros/termipost/internal/httpclient"
-	"github.com/gbrlballesteros/termipost/internal/ui"
-	"github.com/gbrlballesteros/termipost/internal/vars"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/httpclient"
+	"github.com/gabriel-ballesteros/termipost/internal/ui"
+	"github.com/gabriel-ballesteros/termipost/internal/vars"
 )
 
 // responseScreen renders an HTTP response: a masked resolved-request line,

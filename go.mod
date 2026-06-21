@@ -1,4 +1,4 @@
-module github.com/gbrlballesteros/termipost
+module github.com/gabriel-ballesteros/termipost
 
 go 1.25.6
 

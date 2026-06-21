@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/ui"
+	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
 // promptScreen is a reusable single-line text prompt pushed onto the stack. On

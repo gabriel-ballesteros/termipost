@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/ui"
+	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
 // secretsScreen edits the single global secrets store. Values are masked by

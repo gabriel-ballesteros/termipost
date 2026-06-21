@@ -7,9 +7,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
-	"github.com/gbrlballesteros/termipost/internal/httpclient"
-	"github.com/gbrlballesteros/termipost/internal/store"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/httpclient"
+	"github.com/gabriel-ballesteros/termipost/internal/store"
 )
 
 // key builds a KeyMsg for a key name or a run of runes.

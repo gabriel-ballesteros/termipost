@@ -12,7 +12,19 @@ import (
 	"github.com/gabriel-ballesteros/termipost/internal/store"
 )
 
+// version is set at build time via -ldflags (e.g. by GoReleaser); it defaults to
+// "dev" for local builds.
+var version = "dev"
+
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "--version", "-version", "version":
+			fmt.Println("termipost", version)
+			return
+		}
+	}
+
 	dir, err := store.DefaultDir()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "termipost: cannot resolve data directory:", err)

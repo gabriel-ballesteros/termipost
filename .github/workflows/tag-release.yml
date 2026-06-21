@@ -1,0 +1,45 @@
+name: Tag release on merge to main
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    # Only when the PR actually merged AND came from a release/* branch.
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Use a PAT (secret RELEASE_TOKEN) so the pushed tag triggers the
+          # GoReleaser workflow. Falls back to GITHUB_TOKEN, which creates the
+          # tag but will NOT trigger the tag-push release workflow.
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      - name: Create and push version tag
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          version="${HEAD_REF#release/}"        # release/1.2.3 -> 1.2.3
+          if ! echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$'; then
+            echo "::error::'$version' is not a valid semver; skipping tag."
+            exit 1
+          fi
+          tag="v$version"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists; nothing to do."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" "$SHA" -m "Release $tag"
+          git push origin "$tag"

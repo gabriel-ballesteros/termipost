@@ -1,9 +1,9 @@
 package model
 
 import (
-	"github.com/gbrlballesteros/termipost/internal/domain"
-	"github.com/gbrlballesteros/termipost/internal/store"
-	"github.com/gbrlballesteros/termipost/internal/vars"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/store"
+	"github.com/gabriel-ballesteros/termipost/internal/vars"
 )
 
 // App holds the shared, persisted application state plus the store used to

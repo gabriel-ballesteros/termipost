@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
-	"github.com/gbrlballesteros/termipost/internal/ui"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
 // kvEditorScreen edits an ordered list of key/value pairs (headers or query

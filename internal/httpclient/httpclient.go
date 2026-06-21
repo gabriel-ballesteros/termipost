@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
-	"github.com/gbrlballesteros/termipost/internal/vars"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/vars"
 )
 
 // Response is the captured result of sending a request.

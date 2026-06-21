@@ -17,7 +17,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
 )
 
 const (

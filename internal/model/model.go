@@ -11,7 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/gbrlballesteros/termipost/internal/ui"
+	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
 // Screen is a single view in the navigation stack. Update may mutate the root

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gbrlballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/domain"
 )
 
 func TestResolvePrecedenceEnvBeforeSecrets(t *testing.T) {

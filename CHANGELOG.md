@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.0.3) - 2026-06-21
+
+### Changed
+
+- Homebrew formula is now published under `Formula/` in the tap (was the repo root).
+
 ## [1.0.2](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.0.2) - 2026-06-21
 
 ### Added

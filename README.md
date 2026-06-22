@@ -21,21 +21,38 @@ HTTP requests entirely from the keyboard — no mouse required. Built with
 - **Keyboard-only** — every action has a key binding, and the bar at the bottom
   of each screen always shows what is available in the current context.
 
-## Install / Run
+## Install
+
+### Homebrew (macOS / Linux)
+
+```sh
+brew tap gabriel-ballesteros/tap
+brew install termipost
+```
+
+### Windows / direct download
+
+Download the archive for your platform from the
+[latest release](https://github.com/gabriel-ballesteros/termipost/releases/latest)
+— `.zip` for Windows, `.tar.gz` for macOS/Linux — extract it, and put the
+`termipost` (or `termipost.exe`) binary on your `PATH`.
+
+### Go
+
+```sh
+go install github.com/gabriel-ballesteros/termipost@latest
+```
+
+Check your version with `termipost --version`.
+
+### Build from source
 
 Requires Go 1.21+.
 
 ```sh
-make run        # build and run
+make build      # produces ./termipost, then run ./termipost
 # or
-go run .
-```
-
-Build a binary:
-
-```sh
-make build      # produces ./termipost
-./termipost
+make run        # build and run in one step
 ```
 
 ## Data location

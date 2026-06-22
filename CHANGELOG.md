@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.2.0) - 2026-06-21
+
+### Added
+
+- Status-code assertions support a not-equals operator that passes when the
+  response status differs from the expected value (summarized as `status code != N`).
+- The title bar shows the running version (e.g. `termipost v1.2.0`) and a
+  breadcrumb of the open screens (e.g. `Collections › Requests › Edit request`)
+  so it is clear where Esc leads.
+
+### Changed
+
+- The action bar shows the run and test shortcuts as `shift+r` and `shift+t`
+  (and `shift+r` for "run all") to make the required Shift explicit.
+
+### Fixed
+
+- The assertion editor no longer takes an extra ↓ to move past a hidden field
+  (e.g. reaching "Max ms" for a latency assertion); navigation now skips hidden
+  fields.
+
 ## [1.1.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.1.0) - 2026-06-21
 
 ### Added

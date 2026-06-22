@@ -1,0 +1,21 @@
+# Codecov configuration. Defines the two coverage gates that report as PR
+# status checks: `codecov/project` (whole repo) and `codecov/patch` (only the
+# lines changed in the PR). Require both in branch protection for main/develop.
+coverage:
+  status:
+    project:
+      default:
+        target: 80%        # whole-repo coverage must stay at/above this
+        threshold: 1%      # tolerate a 1% dip (e.g. moving code around)
+    patch:
+      default:
+        target: 80%        # at least 80% of the lines a PR changes must be covered
+
+# PR comment summarising project + patch coverage and per-file changes.
+comment:
+  layout: "reach, diff, flags, files"
+  require_changes: false
+
+# Don't fail the gate while Codecov is still waiting for all uploads.
+codecov:
+  require_ci_to_pass: true

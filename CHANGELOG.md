@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.2.1) - 2026-06-22
+
+Internal only — no user-facing changes to the `termipost` binary.
+
+### Changed
+
+- Added a unit and TUI test suite across the `domain`, `httpclient`, `model`,
+  `runner`, `store`, and `vars` packages.
+- Added a CI workflow that builds, vets, and tests on every pull request to
+  `main` and `develop`, and uploads coverage to Codecov.
+- Added Codecov project and patch coverage gates (80% targets) so pull requests
+  must keep both whole-repo and changed-line coverage at or above the threshold.
+- Added build, coverage, code-quality, release, and license badges to the README.
+
 ## [1.2.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.2.0) - 2026-06-21
 
 ### Added

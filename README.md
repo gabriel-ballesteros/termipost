@@ -1,5 +1,13 @@
 # termipost
 
+[![CI](https://github.com/gabriel-ballesteros/termipost/actions/workflows/ci.yml/badge.svg)](https://github.com/gabriel-ballesteros/termipost/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/gabriel-ballesteros/termipost/branch/main/graph/badge.svg)](https://codecov.io/gh/gabriel-ballesteros/termipost)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gabriel-ballesteros/termipost)](https://goreportcard.com/report/github.com/gabriel-ballesteros/termipost)
+[![Latest release](https://img.shields.io/github/v/release/gabriel-ballesteros/termipost)](https://github.com/gabriel-ballesteros/termipost/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/gabriel-ballesteros/termipost/total)](https://github.com/gabriel-ballesteros/termipost/releases)
+[![Go version](https://img.shields.io/github/go-mod/go-version/gabriel-ballesteros/termipost)](go.mod)
+[![License](https://img.shields.io/github/license/gabriel-ballesteros/termipost)](LICENSE)
+
 A Postman-like HTTP client for the terminal. Build, organize, send, and validate
 HTTP requests entirely from the keyboard — no mouse required. Built with
 [Bubble Tea](https://github.com/charmbracelet/bubbletea),
@@ -47,7 +55,7 @@ Check your version with `termipost --version`.
 
 ### Build from source
 
-Requires Go 1.21+.
+Requires Go 1.25 or later (matches the version in `go.mod`).
 
 ```sh
 make build      # produces ./termipost, then run ./termipost

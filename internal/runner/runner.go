@@ -79,6 +79,9 @@ func evaluate(a domain.Assertion, resp *httpclient.Response) domain.AssertionRes
 		if err != nil {
 			return fail(a, fmt.Sprintf("invalid expected status %q", a.Expected))
 		}
+		if a.Op == domain.OpNotEquals {
+			return result(a, resp.StatusCode != want, fmt.Sprintf("status: expected != %d, got %d", want, resp.StatusCode))
+		}
 		return result(a, resp.StatusCode == want, fmt.Sprintf("status: expected %d, got %d", want, resp.StatusCode))
 
 	case domain.AssertHeader:

@@ -36,11 +36,13 @@ type Model struct {
 	statusErr bool
 
 	help help.Model
+
+	version string
 }
 
 // New builds the root model with the collection list as the initial screen.
-func New(app *App, loadErrs []error) *Model {
-	m := &Model{app: app, help: help.New()}
+func New(app *App, version string, loadErrs []error) *Model {
+	m := &Model{app: app, version: version, help: help.New()}
 	m.push(newCollectionListScreen(app))
 	if len(loadErrs) > 0 {
 		var names []string
@@ -126,12 +128,16 @@ func (m *Model) View() string {
 		return "loading…"
 	}
 
-	title := ui.Title.Render("termipost") + "  " + ui.Subtle.Render(s.Title())
+	env := ui.Subtle.Render("   env: ") + ui.Value.Render("none")
 	if e := m.app.ActiveEnv(); e != nil {
-		title += ui.Subtle.Render("   env: ") + ui.Value.Render(e.Name)
-	} else {
-		title += ui.Subtle.Render("   env: none")
+		env = ui.Subtle.Render("   env: ") + ui.Value.Render(e.Name)
 	}
+	name := ui.Title.Render(m.appName())
+	// Breadcrumb fills the space between the name and the env indicator, eliding
+	// from the front when the terminal is too narrow.
+	used := lipgloss.Width(name) + lipgloss.Width(env) + 3
+	crumbs := ui.Subtle.Render("  " + elideLeft(m.breadcrumb(), max(m.width-used, 0)))
+	title := name + crumbs + env
 
 	help := ui.HelpBar.Render(m.help.ShortHelpView(s.HelpBindings()))
 
@@ -163,4 +169,54 @@ func (m *Model) bodyHeight() int {
 		return 1
 	}
 	return h
+}
+
+// crumbSep separates breadcrumb segments.
+const crumbSep = " › "
+
+// crumber lets a screen provide a short breadcrumb label, or "" to be omitted
+// from the trail (used by transient overlays like prompts and confirmations).
+type crumber interface{ Crumb() string }
+
+// appName renders "termipost vX.Y.Z", or "termipost (dev)" for local builds.
+func (m *Model) appName() string {
+	if m.version == "" || m.version == "dev" {
+		return "termipost (dev)"
+	}
+	return "termipost v" + strings.TrimPrefix(m.version, "v")
+}
+
+// breadcrumb joins the open screens' labels, skipping omitted ones.
+func (m *Model) breadcrumb() string {
+	var parts []string
+	for _, s := range m.stack {
+		label := s.Title()
+		if c, ok := s.(crumber); ok {
+			label = c.Crumb()
+		}
+		if label != "" {
+			parts = append(parts, label)
+		}
+	}
+	return strings.Join(parts, crumbSep)
+}
+
+// elideLeft trims s from the left to fit width display columns, prefixing an
+// ellipsis when it had to cut. width <= 0 yields an empty string.
+func elideLeft(s string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+	if lipgloss.Width(s) <= width {
+		return s
+	}
+	r := []rune(s)
+	// Drop leading runes until the remainder (plus "…") fits.
+	for i := 0; i < len(r); i++ {
+		cand := "…" + string(r[i:])
+		if lipgloss.Width(cand) <= width {
+			return cand
+		}
+	}
+	return "…"
 }

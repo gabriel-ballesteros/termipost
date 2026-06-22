@@ -21,7 +21,7 @@ type collectionListScreen struct {
 
 var (
 	keyEnvironments = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "environments"))
-	keyRunCol       = key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "run all"))
+	keyRunCol       = key.NewBinding(key.WithKeys("R"), key.WithHelp("shift+r", "run all"))
 )
 
 func newCollectionListScreen(app *App) *collectionListScreen {

@@ -44,7 +44,7 @@ func main() {
 	}
 
 	app := model.NewApp(s, data)
-	m := model.New(app, data.LoadErrors)
+	m := model.New(app, version, data.LoadErrors)
 
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "termipost:", err)

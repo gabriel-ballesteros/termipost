@@ -104,7 +104,11 @@ func (s *assertionsScreen) View(m *Model) string {
 func describeAssertion(a domain.Assertion) string {
 	switch a.Kind {
 	case domain.AssertStatusCode:
-		return "status code == " + a.Expected
+		op := "=="
+		if a.Op == domain.OpNotEquals {
+			op = "!="
+		}
+		return "status code " + op + " " + a.Expected
 	case domain.AssertHeader:
 		return fmt.Sprintf("header %q %s %q", a.Target, a.Op, a.Expected)
 	case domain.AssertBody:
@@ -159,7 +163,7 @@ func opsFor(k domain.AssertionKind) []domain.MatchOp {
 	case domain.AssertLatency:
 		return []domain.MatchOp{domain.OpMaxMS}
 	default: // status_code
-		return []domain.MatchOp{domain.OpEquals}
+		return []domain.MatchOp{domain.OpEquals, domain.OpNotEquals}
 	}
 }
 
@@ -205,9 +209,9 @@ func (s *assertionEditScreen) Update(m *Model, msg tea.Msg) tea.Cmd {
 	case "esc":
 		m.pop()
 	case "tab", "down", "j":
-		s.focus = (s.focus + 1) % aFieldCount
+		s.focus = stepField(s.visibleFields(), s.focus, 1)
 	case "shift+tab", "up", "k":
-		s.focus = (s.focus + aFieldCount - 1) % aFieldCount
+		s.focus = stepField(s.visibleFields(), s.focus, -1)
 	case "left", "h", "right", "l":
 		s.cycle(km.String() == "right" || km.String() == "l")
 	case "enter", "i":
@@ -227,6 +231,37 @@ func (s *assertionEditScreen) Update(m *Model, msg tea.Msg) tea.Cmd {
 	return nil
 }
 
+// visibleFields lists the editor fields shown for the current assertion, in
+// order. It is the single source of truth for both navigation and rendering, so
+// focus never lands on a field that isn't on screen.
+func (s *assertionEditScreen) visibleFields() []assertionField {
+	if usesTarget(s.a) {
+		return []assertionField{aKind, aOp, aTarget, aExpected}
+	}
+	return []assertionField{aKind, aOp, aExpected}
+}
+
+// stepField returns the field delta steps away from focus within fields
+// (wrapping). If focus is not currently visible, it returns the first field.
+func stepField(fields []assertionField, focus assertionField, delta int) assertionField {
+	for i, f := range fields {
+		if f == focus {
+			n := len(fields)
+			return fields[((i+delta)%n+n)%n]
+		}
+	}
+	return fields[0]
+}
+
+func fieldVisible(fields []assertionField, f assertionField) bool {
+	for _, x := range fields {
+		if x == f {
+			return true
+		}
+	}
+	return false
+}
+
 // cycle advances (or reverses) the selector for the focused Kind/Op field.
 func (s *assertionEditScreen) cycle(forward bool) {
 	switch s.focus {
@@ -241,6 +276,10 @@ func (s *assertionEditScreen) cycle(forward bool) {
 		s.a.Kind = assertionKinds[idx]
 		// reset op to the first valid op for the new kind
 		s.a.Op = opsFor(s.a.Kind)[0]
+		// Changing kind may hide the focused field; keep focus visible.
+		if !fieldVisible(s.visibleFields(), s.focus) {
+			s.focus = aExpected
+		}
 	case aOp:
 		ops := opsFor(s.a.Kind)
 		idx := 0

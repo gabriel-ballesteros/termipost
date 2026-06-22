@@ -341,6 +341,9 @@ func (s *requestEditScreen) Title() string {
 	return "Edit request"
 }
 
+// Crumb keeps a stable breadcrumb label regardless of edit mode.
+func (s *requestEditScreen) Crumb() string { return "Edit request" }
+
 func (s *requestEditScreen) HelpBindings() []key.Binding {
 	if s.editing {
 		return []key.Binding{

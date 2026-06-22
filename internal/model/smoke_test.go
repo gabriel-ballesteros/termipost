@@ -46,7 +46,7 @@ func newTestModel(t *testing.T) *Model {
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
-	root := New(NewApp(s, data), data.LoadErrors)
+	root := New(NewApp(s, data), "dev", data.LoadErrors)
 	send(t, root, tea.WindowSizeMsg{Width: 80, Height: 24})
 	return root
 }
@@ -170,7 +170,7 @@ func TestResponseCopyBody(t *testing.T) {
 		t.Fatal("copy binding not advertised in help")
 	}
 
-	m := New(app, nil)
+	m := New(app, "dev", nil)
 	m.push(scr)
 	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
 	send(t, m, keyMsg("c"))
@@ -195,7 +195,7 @@ func TestRequestListShowsItemsOnOpen(t *testing.T) {
 		t.Fatalf("save: %v", err)
 	}
 	data, _ := s.Load()
-	m := New(NewApp(s, data), nil)
+	m := New(NewApp(s, data), "dev", nil)
 
 	// Size the root, then open the collection (push the request-list screen).
 	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
@@ -223,7 +223,7 @@ func editorModel(t *testing.T) *Model {
 		t.Fatalf("save: %v", err)
 	}
 	data, _ := s.Load()
-	m := New(NewApp(s, data), nil)
+	m := New(NewApp(s, data), "dev", nil)
 	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
 	send(t, m, keyMsg("enter")) // collection -> request list
 	send(t, m, keyMsg("enter")) // request -> editor
@@ -324,5 +324,49 @@ func TestAssertionEditorSkipsHiddenTarget(t *testing.T) {
 	s.Update(&Model{}, tea.KeyMsg{Type: tea.KeyDown})
 	if s.focus != aExpected {
 		t.Fatalf("expected focus on aExpected (max-ms) after one ↓, got %d", s.focus)
+	}
+}
+
+// TestTitleShowsVersion verifies the version (and dev fallback) in the title.
+func TestTitleShowsVersion(t *testing.T) {
+	mk := func(version string) string {
+		s := store.New(t.TempDir())
+		if err := s.Init(); err != nil {
+			t.Fatalf("init: %v", err)
+		}
+		data, _ := s.Load()
+		m := New(NewApp(s, data), version, nil)
+		send(t, m, tea.WindowSizeMsg{Width: 100, Height: 24})
+		return m.View()
+	}
+	if v := mk("1.2.3"); !strings.Contains(v, "termipost v1.2.3") {
+		t.Fatalf("expected 'termipost v1.2.3':\n%s", v)
+	}
+	if v := mk("dev"); !strings.Contains(v, "termipost (dev)") {
+		t.Fatalf("expected 'termipost (dev)':\n%s", v)
+	}
+	// A leading v must not double up.
+	if v := mk("v2.0.0"); !strings.Contains(v, "termipost v2.0.0") || strings.Contains(v, "vv2.0.0") {
+		t.Fatalf("expected 'termipost v2.0.0' without double v:\n%s", v)
+	}
+}
+
+// TestBreadcrumbReflectsStack verifies the breadcrumb tracks the open screens
+// and omits transient overlays.
+func TestBreadcrumbReflectsStack(t *testing.T) {
+	m := editorModel(t)
+	want := "Collections" + crumbSep + "Requests" + crumbSep + "Edit request"
+	if v := m.View(); !strings.Contains(v, want) {
+		t.Fatalf("breadcrumb missing %q:\n%s", want, v)
+	}
+
+	send(t, m, keyMsg("h")) // editor -> Headers editor (a real crumb)
+	send(t, m, keyMsg("a")) // Headers editor -> add prompt (an overlay)
+	v := m.View()
+	if !strings.Contains(v, "Headers") {
+		t.Fatalf("expected Headers crumb:\n%s", v)
+	}
+	if strings.Contains(v, "Input") {
+		t.Fatalf("prompt overlay should be omitted from breadcrumb:\n%s", v)
 	}
 }

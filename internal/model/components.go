@@ -56,6 +56,9 @@ func (s *promptScreen) View(m *Model) string {
 
 func (s *promptScreen) Title() string { return "Input" }
 
+// Crumb omits the prompt overlay from the breadcrumb trail.
+func (s *promptScreen) Crumb() string { return "" }
+
 func (s *promptScreen) HelpBindings() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "confirm")),
@@ -99,6 +102,9 @@ func (s *confirmScreen) View(m *Model) string {
 }
 
 func (s *confirmScreen) Title() string { return "Confirm" }
+
+// Crumb omits the confirmation overlay from the breadcrumb trail.
+func (s *confirmScreen) Crumb() string { return "" }
 
 func (s *confirmScreen) HelpBindings() []key.Binding {
 	return []key.Binding{

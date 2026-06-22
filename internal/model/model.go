@@ -72,7 +72,16 @@ func (m *Model) top() Screen {
 func (m *Model) push(s Screen) tea.Cmd {
 	m.stack = append(m.stack, s)
 	m.clearStatus()
-	return s.Init(m)
+	cmd := s.Init(m)
+	// Bubble Tea only emits WindowSizeMsg at startup and on resize, so a screen
+	// opened later never learns the terminal size on its own. Hand it the
+	// current size now (once known) so list/viewport screens render their
+	// content immediately instead of just a pagination footer.
+	if m.width > 0 {
+		sizeCmd := s.Update(m, tea.WindowSizeMsg{Width: m.width, Height: m.height})
+		cmd = tea.Batch(cmd, sizeCmd)
+	}
+	return cmd
 }
 
 // pop removes the top screen. It is a no-op when only one screen remains.

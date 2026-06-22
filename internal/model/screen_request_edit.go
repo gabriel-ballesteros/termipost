@@ -22,6 +22,7 @@ const (
 	fURL
 	fHeaders
 	fParams
+	fAssertions
 	fBody
 	fieldCount
 )
@@ -129,38 +130,21 @@ func (s *requestEditScreen) updateNav(m *Model, msg tea.KeyMsg) tea.Cmd {
 		s.focus = (s.focus + 1) % fieldCount
 	case "shift+tab", "up", "k":
 		s.focus = (s.focus + fieldCount - 1) % fieldCount
-	case "left", "h":
+	case "left":
 		if s.focus == fMethod {
 			s.methodIdx = (s.methodIdx + len(domain.Methods) - 1) % len(domain.Methods)
 		}
-	case "right", "l":
+	case "right":
 		if s.focus == fMethod {
 			s.methodIdx = (s.methodIdx + 1) % len(domain.Methods)
 		}
 	case "enter", "i":
-		switch s.focus {
-		case fName:
-			s.editing = true
-			s.name.Focus()
-		case fURL:
-			s.editing = true
-			s.url.Focus()
-		case fBody:
-			s.editing = true
-			s.body.Focus()
-		case fMethod:
+		// Enter on Method cycles it; every other field activates normally.
+		if s.focus == fMethod {
 			s.methodIdx = (s.methodIdx + 1) % len(domain.Methods)
-		case fHeaders:
-			return m.push(newKVEditorScreen("Headers", s.req.Headers, func(m *Model, p []domain.KV) tea.Cmd {
-				s.req.Headers = p
-				return nil
-			}))
-		case fParams:
-			return m.push(newKVEditorScreen("Query params", s.req.QueryParams, func(m *Model, p []domain.KV) tea.Cmd {
-				s.req.QueryParams = p
-				return nil
-			}))
+			return nil
 		}
+		return s.activateField(m, s.focus)
 	case "ctrl+s":
 		if err := s.persist(m); err != nil {
 			m.setError("Save failed: " + err.Error())
@@ -189,7 +173,51 @@ func (s *requestEditScreen) updateNav(m *Model, msg tea.KeyMsg) tea.Cmd {
 		s.sending = true
 		m.setStatus("Testing…")
 		return tea.Batch(s.spin.Tick, runRequestCmd(s.app, s.req))
+	case "n":
+		return s.activateField(m, fName)
+	case "m":
+		return s.activateField(m, fMethod)
+	case "u":
+		return s.activateField(m, fURL)
+	case "h":
+		return s.activateField(m, fHeaders)
+	case "p":
+		return s.activateField(m, fParams)
+	case "b":
+		return s.activateField(m, fBody)
 	case "a":
+		return s.activateField(m, fAssertions)
+	}
+	return nil
+}
+
+// activateField focuses f and performs its primary action: text fields enter
+// edit mode, Headers/Params/Assertions open their editors, and Method only
+// gains focus (the arrows or Enter cycle its value). It is the shared path for
+// both Enter and the single-letter field shortcuts.
+func (s *requestEditScreen) activateField(m *Model, f reqField) tea.Cmd {
+	s.focus = f
+	switch f {
+	case fName:
+		s.editing = true
+		s.name.Focus()
+	case fURL:
+		s.editing = true
+		s.url.Focus()
+	case fBody:
+		s.editing = true
+		s.body.Focus()
+	case fHeaders:
+		return m.push(newKVEditorScreen("Headers", s.req.Headers, func(m *Model, p []domain.KV) tea.Cmd {
+			s.req.Headers = p
+			return nil
+		}))
+	case fParams:
+		return m.push(newKVEditorScreen("Query params", s.req.QueryParams, func(m *Model, p []domain.KV) tea.Cmd {
+			s.req.QueryParams = p
+			return nil
+		}))
+	case fAssertions:
 		return m.push(newAssertionsScreen(s.app, s.collectionID, &s.req))
 	}
 	return nil
@@ -252,7 +280,7 @@ func (s *requestEditScreen) View(m *Model) string {
 	b.WriteString(s.fieldRow("URL", fURL, s.fieldText(fURL, s.req.URL)))
 	b.WriteString(s.fieldRow("Headers", fHeaders, fmt.Sprintf("%d entry(ies)  (enter to edit)", len(s.req.Headers))))
 	b.WriteString(s.fieldRow("Params", fParams, fmt.Sprintf("%d entry(ies)  (enter to edit)", len(s.req.QueryParams))))
-	b.WriteString(s.fieldRow("Assertions", -1, fmt.Sprintf("%d  (press a to edit)", len(s.req.Assertions))))
+	b.WriteString(s.fieldRow("Assertions", fAssertions, fmt.Sprintf("%d  (enter to edit)", len(s.req.Assertions))))
 
 	bodyLabel := ui.Label.Render("Body:")
 	if s.focus == fBody {

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.1.0) - 2026-06-21
+
+### Added
+
+- Request editor: every field, including Assertions, is reachable with Tab/arrow
+  keys and openable with Enter; first-letter shortcuts jump straight to a field
+  (`n` name, `m` method, `u` url, `h` headers, `p` params, `b` body,
+  `a` assertions).
+
+### Changed
+
+- The request method now cycles with the arrow keys; the `h`/`l` bindings were
+  removed so `h` can jump to the Headers field.
+
+### Fixed
+
+- Screens opened after startup (a collection's request list, the environments
+  list) now render their items immediately instead of showing only a pagination
+  indicator.
+
 ## [1.0.4](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.0.4) - 2026-06-21
 
 ### Added

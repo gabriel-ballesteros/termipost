@@ -21,21 +21,38 @@ HTTP requests entirely from the keyboard — no mouse required. Built with
 - **Keyboard-only** — every action has a key binding, and the bar at the bottom
   of each screen always shows what is available in the current context.
 
-## Install / Run
+## Install
+
+### Homebrew (macOS / Linux)
+
+```sh
+brew tap gabriel-ballesteros/tap
+brew install termipost
+```
+
+### Windows / direct download
+
+Download the archive for your platform from the
+[latest release](https://github.com/gabriel-ballesteros/termipost/releases/latest)
+— `.zip` for Windows, `.tar.gz` for macOS/Linux — extract it, and put the
+`termipost` (or `termipost.exe`) binary on your `PATH`.
+
+### Go
+
+```sh
+go install github.com/gabriel-ballesteros/termipost@latest
+```
+
+Check your version with `termipost --version`.
+
+### Build from source
 
 Requires Go 1.21+.
 
 ```sh
-make run        # build and run
+make build      # produces ./termipost, then run ./termipost
 # or
-go run .
-```
-
-Build a binary:
-
-```sh
-make build      # produces ./termipost
-./termipost
+make run        # build and run in one step
 ```
 
 ## Data location
@@ -59,9 +76,12 @@ skipped rather than overwritten.
 - `↑/↓` or `j/k` to move, `enter` to open, `esc` to go back, `q` to quit.
 - Lists: `n` new, `r` rename, `d` delete.
 - Collections: `R` run all tests, `e` environments.
-- Request editor: `tab` to move between fields, `enter` to edit a field,
-  `R` run (send and show the response, ignoring assertions),
-  `T` test (send and check assertions), `a` assertions, `ctrl+s` save.
+- Request editor: `tab`/`↑↓` to move between fields (including Assertions),
+  `enter` to edit/open the focused field, `←/→` to cycle the method. Jump
+  straight to a field with its first letter — `n` name, `m` method, `u` url,
+  `h` headers, `p` params, `b` body, `a` assertions. Then `R` run (send and show
+  the response, ignoring assertions), `T` test (send and check assertions),
+  `ctrl+s` save.
 - Response view: `↑/↓` scroll, `c` (or `y`) copy the body to the clipboard
   (`ctrl+c` is reserved for quit), `esc` back.
 - Environments: `a` set active, `enter` edit variables, `s` secrets.

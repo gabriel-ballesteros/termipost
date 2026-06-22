@@ -178,3 +178,33 @@ func TestResponseCopyBody(t *testing.T) {
 		t.Fatal("copy key produced no status feedback")
 	}
 }
+
+// TestRequestListShowsItemsOnOpen guards the bug where a screen opened after
+// startup was never sized, so its list rendered only a pagination footer. After
+// opening a collection, the request rows must be visible.
+func TestRequestListShowsItemsOnOpen(t *testing.T) {
+	s := store.New(t.TempDir())
+	if err := s.Init(); err != nil {
+		t.Fatalf("init: %v", err)
+	}
+	col := domain.Collection{ID: "c-1", Name: "Demo", Requests: []domain.Request{
+		{ID: "r-1", Name: "List users", Method: domain.GET, URL: "https://example.com/users"},
+		{ID: "r-2", Name: "Create user", Method: domain.POST, URL: "https://example.com/users"},
+	}}
+	if err := s.SaveCollection(col); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	data, _ := s.Load()
+	m := New(NewApp(s, data), nil)
+
+	// Size the root, then open the collection (push the request-list screen).
+	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
+	send(t, m, keyMsg("enter"))
+
+	view := m.View()
+	for _, name := range []string{"List users", "Create user"} {
+		if !strings.Contains(view, name) {
+			t.Fatalf("request list missing %q (only pagination?):\n%s", name, view)
+		}
+	}
+}

@@ -313,3 +313,16 @@ func TestEditorMethodCyclesWithArrows(t *testing.T) {
 		t.Fatal("right arrow did not cycle the method")
 	}
 }
+
+// TestAssertionEditorSkipsHiddenTarget guards the bug where ↓ from Operator
+// landed on the hidden Target field. For a latency assertion (Target hidden),
+// one ↓ from Operator must focus the expected/max-ms field directly.
+func TestAssertionEditorSkipsHiddenTarget(t *testing.T) {
+	a := domain.Assertion{Kind: domain.AssertLatency, Op: domain.OpMaxMS, Expected: "100"}
+	s := newAssertionEditScreen(a, nil)
+	s.focus = aOp
+	s.Update(&Model{}, tea.KeyMsg{Type: tea.KeyDown})
+	if s.focus != aExpected {
+		t.Fatalf("expected focus on aExpected (max-ms) after one ↓, got %d", s.focus)
+	}
+}

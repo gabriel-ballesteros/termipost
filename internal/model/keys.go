@@ -27,8 +27,8 @@ var keys = struct {
 	Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 	Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
 	Rename: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
-	Run:    key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "run")),
-	Test:   key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "test")),
+	Run:    key.NewBinding(key.WithKeys("R"), key.WithHelp("shift+r", "run")),
+	Test:   key.NewBinding(key.WithKeys("T"), key.WithHelp("shift+t", "test")),
 	Send:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "send")),
 	Copy:   key.NewBinding(key.WithKeys("c", "y"), key.WithHelp("c", "copy body")),
 

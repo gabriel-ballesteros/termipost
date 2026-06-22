@@ -54,11 +54,12 @@ type MatchOp string
 
 // Match operators.
 const (
-	OpEquals   MatchOp = "equals"
-	OpContains MatchOp = "contains"
-	OpRegex    MatchOp = "regex"
-	OpJSONPath MatchOp = "json_path" // body: dotted JSON path equals Expected
-	OpMaxMS    MatchOp = "max_ms"    // latency: elapsed must be <= Expected ms
+	OpEquals    MatchOp = "equals"
+	OpNotEquals MatchOp = "not_equals" // status code: must differ from Expected
+	OpContains  MatchOp = "contains"
+	OpRegex     MatchOp = "regex"
+	OpJSONPath  MatchOp = "json_path" // body: dotted JSON path equals Expected
+	OpMaxMS     MatchOp = "max_ms"    // latency: elapsed must be <= Expected ms
 )
 
 // Assertion is a single expectation evaluated against a response.

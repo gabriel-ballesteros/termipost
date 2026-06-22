@@ -72,3 +72,15 @@ func TestRunCollectionSummary(t *testing.T) {
 		t.Fatalf("expected 0 passed, got %d", agg.Passed)
 	}
 }
+
+func TestStatusCodeNotEquals(t *testing.T) {
+	r := resp() // status 200
+	pass := evaluate(domain.Assertion{Kind: domain.AssertStatusCode, Op: domain.OpNotEquals, Expected: "500"}, r)
+	if !pass.Passed {
+		t.Fatalf("not_equals should pass when status differs: %s", pass.Detail)
+	}
+	miss := evaluate(domain.Assertion{Kind: domain.AssertStatusCode, Op: domain.OpNotEquals, Expected: "200"}, r)
+	if miss.Passed {
+		t.Fatalf("not_equals should fail when status matches: %s", miss.Detail)
+	}
+}

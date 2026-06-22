@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.0.4) - 2026-06-21
+
+### Added
+
+- Windows builds for amd64 and arm64, published as `.zip` archives.
+
+### Changed
+
+- Homebrew distribution switched from a formula to a cask (the modern vehicle for
+  pre-built binaries); the cask is published under `Casks/` in the tap. Install is
+  unchanged: `brew install gabriel-ballesteros/tap/termipost`.
+
 ## [1.0.3](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.0.3) - 2026-06-21
 
 ### Changed

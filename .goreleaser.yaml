@@ -14,6 +14,7 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
@@ -24,6 +25,10 @@ archives:
   - id: default
     formats: [tar.gz]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    # Windows users expect .zip rather than .tar.gz.
+    format_overrides:
+      - goos: windows
+        formats: [zip]
 
 checksum:
   name_template: "checksums.txt"
@@ -44,20 +49,26 @@ release:
     owner: gabriel-ballesteros
     name: termipost
 
-# Homebrew tap publishing. On each release, GoReleaser pushes/updates a formula
-# in the gabriel-ballesteros/homebrew-tap repo so users can:
+# Homebrew tap publishing. On each release, GoReleaser pushes/updates a cask in
+# the gabriel-ballesteros/homebrew-tap repo (under Casks/) so users can:
 #   brew install gabriel-ballesteros/tap/termipost
-# Requires the HOMEBREW_TAP_TOKEN env (a token with write access to the tap repo)
-# wired in .github/workflows/release.yml.
-brews:
+# Casks are the modern vehicle for pre-built binaries (formulae are build-from-
+# source). Requires the HOMEBREW_TAP_TOKEN env wired in release.yml.
+homebrew_casks:
   - name: termipost
-    directory: Formula
+    binaries:
+      - termipost
     repository:
       owner: gabriel-ballesteros
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/gabriel-ballesteros/termipost"
     description: "A Postman-like HTTP client for the terminal."
-    license: "MIT"
-    test: |
-      system "#{bin}/termipost", "--version"
+    # The binaries are unsigned, so strip the Gatekeeper quarantine xattr on
+    # install to avoid "cannot be opened" prompts on macOS.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/termipost"]
+          end

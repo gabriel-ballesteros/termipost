@@ -208,3 +208,108 @@ func TestRequestListShowsItemsOnOpen(t *testing.T) {
 		}
 	}
 }
+
+// editorModel opens the request editor for a collection with one request.
+func editorModel(t *testing.T) *Model {
+	t.Helper()
+	s := store.New(t.TempDir())
+	if err := s.Init(); err != nil {
+		t.Fatalf("init: %v", err)
+	}
+	col := domain.Collection{ID: "c-1", Name: "Demo", Requests: []domain.Request{
+		{ID: "r-1", Name: "Get", Method: domain.GET, URL: "https://example.com"},
+	}}
+	if err := s.SaveCollection(col); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	data, _ := s.Load()
+	m := New(NewApp(s, data), nil)
+	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
+	send(t, m, keyMsg("enter")) // collection -> request list
+	send(t, m, keyMsg("enter")) // request -> editor
+	if _, ok := m.top().(*requestEditScreen); !ok {
+		t.Fatalf("expected request editor, got %T", m.top())
+	}
+	return m
+}
+
+// TestEditorAssertionsFocusable verifies Assertions is in the Tab focus cycle
+// and that Enter on it opens the assertions screen.
+func TestEditorAssertionsFocusable(t *testing.T) {
+	m := editorModel(t)
+	ed := m.top().(*requestEditScreen)
+
+	reached := false
+	for i := 0; i < int(fieldCount); i++ {
+		if ed.focus == fAssertions {
+			reached = true
+			break
+		}
+		send(t, m, keyMsg("tab"))
+	}
+	if !reached {
+		t.Fatal("Assertions field was never reached by Tab")
+	}
+	send(t, m, keyMsg("enter"))
+	if _, ok := m.top().(*assertionsScreen); !ok {
+		t.Fatalf("Enter on Assertions did not open the assertions screen, got %T", m.top())
+	}
+}
+
+// TestEditorFieldShortcuts verifies the first-letter shortcuts activate fields,
+// and that shortcuts are inert while editing a text field.
+func TestEditorFieldShortcuts(t *testing.T) {
+	// a -> assertions screen
+	m := editorModel(t)
+	send(t, m, keyMsg("a"))
+	if _, ok := m.top().(*assertionsScreen); !ok {
+		t.Fatalf("`a` did not open assertions, got %T", m.top())
+	}
+
+	// p -> query params KV editor
+	m = editorModel(t)
+	send(t, m, keyMsg("p"))
+	if _, ok := m.top().(*kvEditorScreen); !ok {
+		t.Fatalf("`p` did not open a KV editor, got %T", m.top())
+	}
+
+	// h -> headers KV editor (h must no longer cycle the method)
+	m = editorModel(t)
+	send(t, m, keyMsg("h"))
+	if _, ok := m.top().(*kvEditorScreen); !ok {
+		t.Fatalf("`h` did not open the headers editor, got %T", m.top())
+	}
+
+	// n -> focus Name and enter edit mode
+	m = editorModel(t)
+	send(t, m, keyMsg("n"))
+	ed := m.top().(*requestEditScreen)
+	if !ed.editing || ed.focus != fName {
+		t.Fatalf("`n` did not enter edit mode on Name (editing=%v focus=%d)", ed.editing, ed.focus)
+	}
+
+	// While editing, a shortcut letter must type into the field, not trigger.
+	send(t, m, keyMsg("p"))
+	if _, ok := m.top().(*kvEditorScreen); ok {
+		t.Fatal("shortcut fired while editing a text field")
+	}
+	if got := ed.name.Value(); got[len(got)-1] != 'p' {
+		t.Fatalf("expected typed 'p' appended to name, got %q", got)
+	}
+}
+
+// TestEditorMethodCyclesWithArrows verifies the method still cycles with the
+// arrow keys after `h`/`l` were removed, and that `m` focuses Method.
+func TestEditorMethodCyclesWithArrows(t *testing.T) {
+	m := editorModel(t)
+	send(t, m, keyMsg("m")) // focus Method
+	ed := m.top().(*requestEditScreen)
+	if ed.focus != fMethod {
+		t.Fatalf("`m` did not focus Method, focus=%d", ed.focus)
+	}
+	before := ed.methodIdx
+	send(t, m, tea.KeyMsg{Type: tea.KeyRight})
+	if ed.methodIdx == before {
+		t.Fatal("right arrow did not cycle the method")
+	}
+}

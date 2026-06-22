@@ -76,9 +76,12 @@ skipped rather than overwritten.
 - `↑/↓` or `j/k` to move, `enter` to open, `esc` to go back, `q` to quit.
 - Lists: `n` new, `r` rename, `d` delete.
 - Collections: `R` run all tests, `e` environments.
-- Request editor: `tab` to move between fields, `enter` to edit a field,
-  `R` run (send and show the response, ignoring assertions),
-  `T` test (send and check assertions), `a` assertions, `ctrl+s` save.
+- Request editor: `tab`/`↑↓` to move between fields (including Assertions),
+  `enter` to edit/open the focused field, `←/→` to cycle the method. Jump
+  straight to a field with its first letter — `n` name, `m` method, `u` url,
+  `h` headers, `p` params, `b` body, `a` assertions. Then `R` run (send and show
+  the response, ignoring assertions), `T` test (send and check assertions),
+  `ctrl+s` save.
 - Response view: `↑/↓` scroll, `c` (or `y`) copy the body to the clipboard
   (`ctrl+c` is reserved for quit), `esc` back.
 - Environments: `a` set active, `enter` edit variables, `s` secrets.

@@ -14,7 +14,12 @@ jobs:
     steps:
       - name: Open (or reuse) the sync PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use a PAT (secret RELEASE_TOKEN) so the opened PR triggers the
+          # required pull_request checks (test, codecov/patch, branch-policy).
+          # A PR opened with GITHUB_TOKEN does NOT trigger those workflows, which
+          # would leave the back-merge PR permanently blocked on a check that
+          # never runs. Falls back to GITHUB_TOKEN if the PAT is unset.
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           REPO: ${{ github.repository }}
         run: |
           # Skip if a back-merge PR is already open.

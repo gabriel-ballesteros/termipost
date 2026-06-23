@@ -14,6 +14,8 @@ var keys = struct {
 	Save, Add, Toggle     key.Binding
 	Reveal, SetActive     key.Binding
 	Tab, ShiftTab         key.Binding
+	Window                key.Binding
+	TabNext, TabPrev      key.Binding
 }{
 	Up:    key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
 	Down:  key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
@@ -39,4 +41,7 @@ var keys = struct {
 	SetActive: key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "set active")),
 	Tab:       key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next")),
 	ShiftTab:  key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "prev")),
+	Window:    key.NewBinding(key.WithKeys("ctrl+w"), key.WithHelp("ctrl+w h/j/k/l", "focus pane")),
+	TabNext:   key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next tab")),
+	TabPrev:   key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev tab")),
 }

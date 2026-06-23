@@ -1,19 +1,13 @@
 package model
 
 import (
-	"net/http"
 	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/gabriel-ballesteros/termipost/internal/domain"
-	"github.com/gabriel-ballesteros/termipost/internal/httpclient"
 )
-
-func respFixture() *httpclient.Response {
-	return &httpclient.Response{StatusCode: 200, Status: "200 OK", Headers: http.Header{}, Body: []byte("{}")}
-}
 
 // renderTop sizes the model and returns the rendered view of the top screen,
 // exercising its View/Title/HelpBindings/Crumb path.
@@ -23,15 +17,27 @@ func renderTop(t *testing.T, m *Model) string {
 	return m.View()
 }
 
+func TestRenderWorkspacePanes(t *testing.T) {
+	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
+		{ID: "r1", Name: "Get", Method: domain.GET, URL: "https://example.com"},
+	}}
+	m := seededModel(t, col)
+	v := renderTop(t, m)
+	for _, want := range []string{"Collections", "Request", "Response", "Send", "API", "Get"} {
+		if !strings.Contains(v, want) {
+			t.Fatalf("workspace view missing %q:\n%s", want, v)
+		}
+	}
+}
+
 func TestRenderAssertionsScreen(t *testing.T) {
 	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
 		{ID: "r1", Name: "Get", Method: domain.GET, URL: "https://x",
 			Assertions: []domain.Assertion{{Kind: domain.AssertStatusCode, Op: domain.OpEquals, Expected: "200"}}},
 	}}
 	m := seededModel(t, col)
-	openRequests(t, m)
-	send(t, m, keyMsg("enter")) // editor
-	send(t, m, keyMsg("a"))     // assertions screen
+	ws(m).focus = paneEditor
+	send(t, m, keyMsg("a")) // assertions screen
 	v := renderTop(t, m)
 	if !strings.Contains(v, "Assertions") || !strings.Contains(v, "status code == 200") {
 		t.Fatalf("assertions screen view missing content:\n%s", v)
@@ -39,8 +45,7 @@ func TestRenderAssertionsScreen(t *testing.T) {
 
 	// Empty-state branch.
 	m2 := seededModel(t, domain.Collection{ID: "c2", Name: "B", Requests: []domain.Request{{ID: "r9", Name: "n", Method: domain.GET}}})
-	openRequests(t, m2)
-	send(t, m2, keyMsg("enter"))
+	ws(m2).focus = paneEditor
 	send(t, m2, keyMsg("a"))
 	if v := renderTop(t, m2); !strings.Contains(v, "No assertions") {
 		t.Fatalf("expected empty assertions hint:\n%s", v)
@@ -48,7 +53,6 @@ func TestRenderAssertionsScreen(t *testing.T) {
 }
 
 func TestRenderAssertionEditScreen(t *testing.T) {
-	// Header kind shows a Target row; latency shows "Max ms".
 	cases := []struct {
 		a    domain.Assertion
 		want string
@@ -76,7 +80,6 @@ func TestRenderKVEditor(t *testing.T) {
 		t.Fatalf("kv editor view missing content:\n%s", v)
 	}
 
-	// Empty-state branch.
 	m2 := seededModel(t)
 	m2.push(newKVEditorScreen("Params", nil, nil))
 	if v := renderTop(t, m2); !strings.Contains(v, "No entries") {
@@ -84,17 +87,17 @@ func TestRenderKVEditor(t *testing.T) {
 	}
 }
 
-func TestRenderResponseScreen(t *testing.T) {
+func TestRenderInlineKVEditor(t *testing.T) {
 	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
-		{ID: "r1", Name: "Get", Method: domain.GET, URL: "https://example.com"},
+		{ID: "r1", Name: "Get", Method: domain.GET, URL: "https://x",
+			Headers: []domain.KV{{Key: "Content-Type", Value: "application/json"}}},
 	}}
 	m := seededModel(t, col)
-	openRequests(t, m)
-	send(t, m, keyMsg("enter")) // editor
-	ed := m.top().(*requestEditScreen)
-	ed.Update(m, sendResultMsg{resp: respFixture()})
-	if v := renderTop(t, m); !strings.Contains(v, "Response") {
-		t.Fatalf("response screen view missing title:\n%s", v)
+	ws(m).focus = paneEditor
+	send(t, m, keyMsg("h")) // Headers tab
+	v := renderTop(t, m)
+	if !strings.Contains(v, "Content-Type") || !strings.Contains(v, "application/json") {
+		t.Fatalf("inline headers not rendered in pane:\n%s", v)
 	}
 }
 
@@ -126,14 +129,10 @@ func TestSimpleItemFilterValue(t *testing.T) {
 
 func TestModelInitAndDepth(t *testing.T) {
 	m := seededModel(t, domain.Collection{ID: "c1", Name: "API"})
-	if m.Init() != nil {
-		// collection list Init returns nil; just ensure it does not panic.
-		t.Log("Init returned a cmd")
-	}
 	if m.depth() != 1 {
 		t.Fatalf("depth = %d, want 1", m.depth())
 	}
-	openRequests(t, m)
+	send(t, m, keyMsg("E")) // open environments overlay
 	if m.depth() != 2 {
 		t.Fatalf("depth after open = %d, want 2", m.depth())
 	}

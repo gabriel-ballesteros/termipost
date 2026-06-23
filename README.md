@@ -14,6 +14,12 @@ HTTP requests entirely from the keyboard — no mouse required. Built with
 [Bubbles](https://github.com/charmbracelet/bubbles), and
 [Lip Gloss](https://github.com/charmbracelet/lipgloss).
 
+![termipost in action](assets/termipost.gif)
+
+A single-screen workspace puts the collection tree, the request editor, and the
+response side by side — pick a request, tweak it, send, and read the response
+without leaving the screen.
+
 ## Features
 
 - **Collections** — group related requests; create, rename, delete.

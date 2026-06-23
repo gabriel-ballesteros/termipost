@@ -19,6 +19,11 @@ jobs:
           # A PR opened with GITHUB_TOKEN does NOT trigger those workflows, which
           # would leave the back-merge PR permanently blocked on a check that
           # never runs. Falls back to GITHUB_TOKEN if the PAT is unset.
+          #
+          # NOTE: the PAT must grant "Pull requests: read and write" on this repo
+          # (fine-grained) or the `repo` scope (classic). Without it `gh pr create`
+          # fails with "Resource not accessible by personal access token
+          # (createPullRequest)" and no back-merge PR is opened.
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           REPO: ${{ github.repository }}
         run: |
@@ -27,8 +32,20 @@ jobs:
             echo "Back-merge PR already open."
             exit 0
           fi
-          # Open a main -> develop PR; no-op if develop already contains main.
-          gh pr create --repo "$REPO" --base develop --head main \
+          # Open a main -> develop PR. Capture output so we can tell a genuine
+          # no-op (develop already contains main) from a real failure (e.g. the
+          # token lacking PR-create permission), which must fail the step rather
+          # than be silently swallowed.
+          if out="$(gh pr create --repo "$REPO" --base develop --head main \
             --title "Back-merge: main → develop" \
-            --body "Automated PR keeping develop in sync with main (releases/hotfixes). Merge with a merge commit (not squash) to preserve history." \
-            || echo "Nothing to back-merge (develop already up to date)."
+            --body "Automated PR keeping develop in sync with main (releases/hotfixes). Merge with a merge commit (not squash) to preserve history." 2>&1)"; then
+            echo "$out"
+            exit 0
+          fi
+          echo "$out"
+          if echo "$out" | grep -qi "No commits between"; then
+            echo "Nothing to back-merge (develop already up to date)."
+            exit 0
+          fi
+          echo "::error::Failed to open the back-merge PR (see output above)."
+          exit 1

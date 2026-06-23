@@ -1,18 +1,4 @@
-# tui-navigation Specification
-
-## Purpose
-Provide keyboard-only navigation, contextual help, consistent screen transitions, and a responsive layout for the terminal UI.
-## Requirements
-### Requirement: Keyboard-only operation
-The system SHALL make every action reachable and executable using only the keyboard, with no dependency on a mouse.
-
-#### Scenario: Navigate lists with keyboard
-- **WHEN** a list of items (collections, requests, tests) is displayed
-- **THEN** the user can move the selection with both arrow keys and vim-style keys (j/k) and confirm with Enter
-
-#### Scenario: Complete a full workflow without a mouse
-- **WHEN** the user creates a collection, adds a request, sends it, and runs a test
-- **THEN** every step is achievable through keyboard input alone
+## MODIFIED Requirements
 
 ### Requirement: Contextual action bar
 The system SHALL display a persistent action/help bar at the bottom of every
@@ -60,21 +46,6 @@ workspace rather than by pushing a new screen per step.
 - **WHEN** the user is editing a text field
 - **THEN** navigation/quit and pane-focus shortcuts that conflict with text entry are suspended until the user exits the field
 
-### Requirement: Responsive layout
-The system SHALL render correctly across a range of terminal sizes, adapt to terminal resize events, and size each screen to the current terminal as soon as it is opened so its content is visible immediately.
-
-#### Scenario: Adapt to terminal resize
-- **WHEN** the terminal window is resized
-- **THEN** the system reflows its layout to fit the new dimensions and keeps the action bar visible
-
-#### Scenario: Newly opened screen is sized immediately
-- **WHEN** the user opens (navigates into) a screen after startup
-- **THEN** the system sizes that screen to the current terminal dimensions before it is first rendered
-
-#### Scenario: List screens show their items on open
-- **WHEN** the user opens a screen containing a scrollable list (such as a collection's requests or the environments list)
-- **THEN** the list renders its item rows immediately, not only a pagination indicator
-
 ### Requirement: Title shows version and navigation breadcrumb
 The top chrome SHALL display the application name with its version and a
 breadcrumb reflecting the current location, so the user can see which version is
@@ -97,4 +68,3 @@ running and the path that Esc will unwind.
 #### Scenario: Transient overlays are not shown in the breadcrumb
 - **WHEN** a transient overlay (such as a text prompt or a confirmation dialog) is the active screen
 - **THEN** the breadcrumb continues to reflect the underlying location and does not add a crumb for the overlay
-

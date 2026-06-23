@@ -12,7 +12,7 @@ import (
 // openSecrets navigates Collections -> Environments -> Secrets.
 func openSecrets(t *testing.T, m *Model) *secretsScreen {
 	t.Helper()
-	send(t, m, keyMsg("e"))
+	send(t, m, keyMsg("E"))
 	send(t, m, keyMsg("s"))
 	ss, ok := m.top().(*secretsScreen)
 	if !ok {

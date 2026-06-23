@@ -11,9 +11,9 @@ import (
 	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
-// kvEditorScreen edits an ordered list of key/value pairs (headers or query
-// params). Entries are added/edited via a "key: value" prompt. On Esc it calls
-// onDone with the edited pairs and pops.
+// kvEditorScreen edits an ordered list of key/value pairs as a pushed overlay.
+// It is used for environment variables; request headers and query params are
+// edited inline in the workspace editor pane (see kveditor.go).
 type kvEditorScreen struct {
 	title  string
 	pairs  []domain.KV
@@ -81,19 +81,6 @@ func (s *kvEditorScreen) Update(m *Model, msg tea.Msg) tea.Cmd {
 		}
 	}
 	return nil
-}
-
-func parseKV(s string) (domain.KV, bool) {
-	idx := strings.Index(s, ":")
-	if idx < 0 {
-		return domain.KV{}, false
-	}
-	key := strings.TrimSpace(s[:idx])
-	val := strings.TrimSpace(s[idx+1:])
-	if key == "" {
-		return domain.KV{}, false
-	}
-	return domain.KV{Key: key, Value: val}, true
 }
 
 func (s *kvEditorScreen) View(m *Model) string {

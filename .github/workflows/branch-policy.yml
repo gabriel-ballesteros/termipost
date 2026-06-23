@@ -1,0 +1,51 @@
+name: Branch policy
+
+# Enforces which source branches may open a pull request into the protected
+# branches. GitHub rulesets can only match the destination branch, not the PR
+# source, so this runs as a required status check instead:
+#   - into main:    release/X.Y.Z  or  hotfix/*
+#   - into develop: main  or  feature|fix|chore|docs|refactor/*
+#
+# For a pull_request event GitHub runs the workflow file from the BASE branch,
+# so the policy for a branch only takes effect once this file lives on it.
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-policy:
+    name: branch-policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce allowed source branches
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          echo "PR source '$HEAD' -> base '$BASE'"
+          case "$BASE" in
+            main)
+              if [[ "$HEAD" =~ ^release/[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]] \
+                 || [[ "$HEAD" =~ ^hotfix/.+ ]]; then
+                echo "Allowed: $HEAD may target main."
+              else
+                echo "::error::PRs into main must come from release/X.Y.Z or hotfix/* (got '$HEAD')."
+                exit 1
+              fi
+              ;;
+            develop)
+              if [[ "$HEAD" == "main" ]] \
+                 || [[ "$HEAD" =~ ^(feature|fix|chore|docs|refactor)/.+ ]]; then
+                echo "Allowed: $HEAD may target develop."
+              else
+                echo "::error::PRs into develop must come from main or feature|fix|chore|docs|refactor/* (got '$HEAD')."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "No branch-source policy defined for base '$BASE'; allowing."
+              ;;
+          esac

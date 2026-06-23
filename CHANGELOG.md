@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.3.0) - 2026-06-23
+
+### Added
+
+- Single-screen, multi-pane workspace: the collection tree, request editor, and
+  response are visible side by side, so the pick-a-request → edit → send → read
+  loop happens without leaving the screen.
+- Collapsible two-level collection tree (`▸`/`▾`), tabbed request editor
+  (Request / Headers / Query / Body) with an inline key/value editor for headers
+  and query params, and a tabbed response pane (Body / Headers) that soft-wraps
+  long lines.
+- Vim-style pane focus with the window chord (`ctrl+w` then `h`/`j`/`k`/`l`);
+  `Tab`/`j`/`k` and `[`/`]` stay in-pane.
+- Unsaved-edit guard when switching the selected request or quitting with `q`
+  (`Ctrl+C` still hard-quits).
+
+### Changed
+
+- The footer wraps onto multiple lines on narrow terminals instead of eliding
+  bindings, and the layout falls back to a single full-area pane when the
+  terminal is too small for the full grid, reflowing on resize.
+
 ## [1.2.2](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.2.2) - 2026-06-22
 
 Internal only — no user-facing changes to the `termipost` binary.

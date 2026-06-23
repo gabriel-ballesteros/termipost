@@ -38,12 +38,16 @@ type Model struct {
 	help help.Model
 
 	version string
+
+	// helpLines is the number of lines the footer occupied on the last render,
+	// so bodyHeight can reserve the right amount of space.
+	helpLines int
 }
 
 // New builds the root model with the collection list as the initial screen.
 func New(app *App, version string, loadErrs []error) *Model {
 	m := &Model{app: app, version: version, help: help.New()}
-	m.push(newCollectionListScreen(app))
+	m.push(newWorkspaceScreen(app))
 	if len(loadErrs) > 0 {
 		var names []string
 		for _, e := range loadErrs {
@@ -139,7 +143,8 @@ func (m *Model) View() string {
 	crumbs := ui.Subtle.Render("  " + elideLeft(m.breadcrumb(), max(m.width-used, 0)))
 	title := name + crumbs + env
 
-	help := ui.HelpBar.Render(m.help.ShortHelpView(s.HelpBindings()))
+	help, helpLines := m.renderHelp(s.HelpBindings())
+	m.helpLines = helpLines
 
 	status := ""
 	if m.status != "" {
@@ -150,25 +155,79 @@ func (m *Model) View() string {
 		}
 	}
 
-	// Reserve lines for title, blank, status, help.
-	chrome := 4
-	bodyHeight := m.height - chrome
-	if bodyHeight < 1 {
-		bodyHeight = 1
-	}
+	bodyHeight := m.bodyHeight()
 	body := s.View(m)
 	body = lipgloss.NewStyle().Height(bodyHeight).MaxHeight(bodyHeight).Render(body)
 
 	return strings.Join([]string{title, body, status, help}, "\n")
 }
 
-// bodyHeight returns the height available to a screen's body content.
+// bodyHeight returns the height available to a screen's body content, reserving
+// one line each for the title and status plus however many lines the footer used.
 func (m *Model) bodyHeight() int {
-	h := m.height - 4
+	hl := m.helpLines
+	if hl < 1 {
+		hl = 1
+	}
+	h := m.height - (2 + hl)
 	if h < 1 {
 		return 1
 	}
 	return h
+}
+
+// maxHelpLines caps how tall the footer may grow on small terminals.
+const maxHelpLines = 3
+
+// renderHelp lays the contextual key bindings into a footer that wraps onto up
+// to maxHelpLines lines instead of eliding when the terminal is narrow. It
+// returns the rendered block and the number of lines it occupies.
+func (m *Model) renderHelp(bindings []key.Binding) (string, int) {
+	var segs []string
+	for _, b := range bindings {
+		if !b.Enabled() {
+			continue
+		}
+		h := b.Help()
+		if h.Key == "" {
+			continue
+		}
+		segs = append(segs, ui.FieldFocused.Render(h.Key)+" "+ui.Subtle.Render(h.Desc))
+	}
+	if len(segs) == 0 {
+		return ui.HelpBar.Render(""), 1
+	}
+
+	const sep = "  •  "
+	width := m.width - 2 // account for HelpBar's horizontal padding
+	if width < 1 {
+		width = 1
+	}
+
+	var lines []string
+	cur := ""
+	for _, s := range segs {
+		cand := s
+		if cur != "" {
+			cand = cur + sep + s
+		}
+		if cur != "" && lipgloss.Width(cand) > width {
+			lines = append(lines, cur)
+			cur = s
+			if len(lines) == maxHelpLines {
+				// No more room; mark that bindings were dropped and stop.
+				lines[maxHelpLines-1] = lines[maxHelpLines-1] + ui.Subtle.Render(" …")
+				cur = ""
+				break
+			}
+		} else {
+			cur = cand
+		}
+	}
+	if cur != "" {
+		lines = append(lines, cur)
+	}
+	return ui.HelpBar.Render(strings.Join(lines, "\n")), len(lines)
 }
 
 // crumbSep separates breadcrumb segments.

@@ -16,10 +16,18 @@ without leaving the screen.
   **request editor** pane (tabbed: Headers, Query, Body, Auth/Info as available),
   and a bottom-right **response** pane (tabbed: Body, Headers, Cookies/Trace as
   available), all on one screen and reflowing to terminal size.
-- Add a **pane focus model**: exactly one pane is focused at a time; `Tab` /
-  `Shift+Tab` cycle panes and direct directional jump keys move focus between
-  panes. Only the focused pane consumes its content keys; the action bar reflects
-  the focused pane.
+- Add a **pane focus model**: exactly one pane is focused at a time. Pane focus
+  moves with a vim-style window chord (`ctrl+w` then `h/j/k/l`); `Tab`/`Shift+Tab`
+  and `j/k`/arrows stay **in-pane** (field/row navigation), and `[`/`]` switch the
+  active tab within the focused pane. Only the focused pane consumes its content
+  keys; the action bar reflects the focused pane.
+- **Inline the key/value editor** (request Headers and Query params) directly
+  into the request editor pane — no separate pushed screen — so headers are
+  edited as rows in place, matching the single-screen layout. The assertions
+  editor and other secondary flows remain overlays.
+- **Confirm before discarding unsaved edits**: selecting a different request in
+  the tree while the editor has unsaved changes prompts the user to confirm
+  before switching.
 - Replace the collection-list → requests → request-editor → response **stack
   navigation** for this core loop with in-place pane focus. **BREAKING** for the
   navigation model: the primary loop no longer pushes/pops full screens.
@@ -46,8 +54,10 @@ without leaving the screen.
 - **Code**: `internal/model` — new workspace screen and pane components;
   refactor of `model.go` View/Update to host panes; `screen_collections.go`,
   `screen_requests.go`, `screen_request_edit.go`, `screen_response.go` become
-  pane content rather than standalone screens; `keys.go` gains pane-focus
-  bindings; `internal/ui` styling for focused/unfocused pane borders.
+  pane content rather than standalone screens; `screen_kv.go` logic moves inline
+  into the editor pane; `keys.go` gains the `ctrl+w` window chord, `[`/`]` tab
+  switching, and pane-focus bindings; `internal/ui` styling for focused/unfocused
+  pane borders.
 - **Behavior**: navigation muscle memory changes for the core loop; existing
   per-field jump keys must coexist with pane-focus keys (no clashes).
 - **Specs**: new `workspace-layout`, delta on `tui-navigation`. No change to

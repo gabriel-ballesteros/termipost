@@ -12,10 +12,10 @@ import (
 // openEnv navigates Collections -> Environments.
 func openEnv(t *testing.T, m *Model) *envListScreen {
 	t.Helper()
-	send(t, m, keyMsg("e"))
+	send(t, m, keyMsg("E"))
 	es, ok := m.top().(*envListScreen)
 	if !ok {
-		t.Fatalf("`e` should open environments, got %T", m.top())
+		t.Fatalf("`E` should open environments, got %T", m.top())
 	}
 	return es
 }

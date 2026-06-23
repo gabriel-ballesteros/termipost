@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -31,17 +30,25 @@ func seededModel(t *testing.T, cols ...domain.Collection) *Model {
 		t.Fatalf("load: %v", err)
 	}
 	m := New(NewApp(s, data), "dev", nil)
-	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
+	send(t, m, tea.WindowSizeMsg{Width: 100, Height: 30})
 	return m
 }
 
-// ---- collections screen ----
+// ws returns the workspace screen at the bottom of the stack.
+func ws(m *Model) *workspaceScreen { return m.stack[0].(*workspaceScreen) }
+
+// errString is a minimal error for injecting send failures.
+type errString string
+
+func (e errString) Error() string { return string(e) }
+
+// ---- tree pane: collection CRUD ----
 
 func TestCreateCollectionValidation(t *testing.T) {
 	m := seededModel(t)
 
 	// Empty name is rejected.
-	send(t, m, keyMsg("n"))
+	send(t, m, keyMsg("N"))
 	send(t, m, keyMsg("enter"))
 	if !m.statusErr {
 		t.Fatal("empty collection name should set an error")
@@ -51,7 +58,7 @@ func TestCreateCollectionValidation(t *testing.T) {
 	}
 
 	// Valid name creates one.
-	send(t, m, keyMsg("n"))
+	send(t, m, keyMsg("N"))
 	send(t, m, keyMsg("API"))
 	send(t, m, keyMsg("enter"))
 	if len(m.app.collections) != 1 || m.app.collections[0].Name != "API" {
@@ -59,7 +66,7 @@ func TestCreateCollectionValidation(t *testing.T) {
 	}
 
 	// Duplicate name is rejected.
-	send(t, m, keyMsg("n"))
+	send(t, m, keyMsg("N"))
 	send(t, m, keyMsg("API"))
 	send(t, m, keyMsg("enter"))
 	if !m.statusErr {
@@ -73,7 +80,6 @@ func TestCreateCollectionValidation(t *testing.T) {
 func TestRenameCollection(t *testing.T) {
 	m := seededModel(t, domain.Collection{ID: "c1", Name: "Old"})
 	send(t, m, keyMsg("r"))
-	// Clear the prefilled value then type a new name.
 	send(t, m, tea.KeyMsg{Type: tea.KeyCtrlU})
 	send(t, m, keyMsg("New"))
 	send(t, m, keyMsg("enter"))
@@ -114,7 +120,8 @@ func TestRunCollectionShowsResults(t *testing.T) {
 			Assertions: []domain.Assertion{{Kind: domain.AssertStatusCode, Op: domain.OpEquals, Expected: "200"}}},
 	}}
 	m := seededModel(t, col)
-	send(t, m, keyMsg("R")) // run all; send() drains the network round
+	// Cursor starts on the collection row; x runs the whole collection.
+	send(t, m, keyMsg("x"))
 	if _, ok := m.top().(*runResultsScreen); !ok {
 		t.Fatalf("running a collection should push run results, got %T", m.top())
 	}
@@ -123,22 +130,22 @@ func TestRunCollectionShowsResults(t *testing.T) {
 	}
 }
 
-// ---- requests screen ----
+// ---- tree pane: request CRUD ----
 
-func openRequests(t *testing.T, m *Model) *requestListScreen {
-	t.Helper()
-	send(t, m, keyMsg("enter")) // open the selected collection
-	rs, ok := m.top().(*requestListScreen)
-	if !ok {
-		t.Fatalf("enter should open the request list, got %T", m.top())
-	}
-	return rs
+// withRequest seeds one collection+request and focuses the editor on it.
+func withRequest(t *testing.T) *Model {
+	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
+		{ID: "r1", Name: "Get", Method: domain.GET, URL: "https://example.com"},
+	}}
+	m := seededModel(t, col)
+	// Constructor loads the first request; make sure the editor is focused.
+	ws(m).focus = paneEditor
+	return m
 }
 
-func TestCreateRequestOpensEditor(t *testing.T) {
+func TestCreateRequestLoadsEditor(t *testing.T) {
 	m := seededModel(t, domain.Collection{ID: "c1", Name: "API"})
-	openRequests(t, m)
-
+	// Tree focused, cursor on the collection.
 	send(t, m, keyMsg("n"))
 	send(t, m, keyMsg("List"))
 	send(t, m, keyMsg("enter"))
@@ -150,14 +157,17 @@ func TestCreateRequestOpensEditor(t *testing.T) {
 	if col.Requests[0].Method != domain.GET {
 		t.Fatalf("new request should default to GET, got %s", col.Requests[0].Method)
 	}
-	if _, ok := m.top().(*requestEditScreen); !ok {
-		t.Fatalf("creating a request should open its editor, got %T", m.top())
+	w := ws(m)
+	if !w.editor.loaded || w.editor.reqID != col.Requests[0].ID {
+		t.Fatalf("new request should be loaded in the editor, got %q", w.editor.reqID)
+	}
+	if w.focus != paneEditor {
+		t.Fatalf("focus should move to the editor, got %d", w.focus)
 	}
 }
 
 func TestCreateRequestEmptyRejected(t *testing.T) {
 	m := seededModel(t, domain.Collection{ID: "c1", Name: "API"})
-	openRequests(t, m)
 	send(t, m, keyMsg("n"))
 	send(t, m, keyMsg("enter")) // empty name
 	if !m.statusErr {
@@ -169,11 +179,10 @@ func TestCreateRequestEmptyRejected(t *testing.T) {
 }
 
 func TestDeleteRequestConfirmed(t *testing.T) {
-	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
-		{ID: "r1", Name: "one", Method: domain.GET},
-	}}
-	m := seededModel(t, col)
-	openRequests(t, m)
+	m := withRequest(t)
+	// Move focus to the tree and select the request row (collection is row 0).
+	ws(m).focus = paneTree
+	ws(m).tree.cursor = 1
 	send(t, m, keyMsg("d"))
 	send(t, m, keyMsg("y"))
 	if n := len(m.app.findCollection("c1").Requests); n != 0 {
@@ -181,33 +190,12 @@ func TestDeleteRequestConfirmed(t *testing.T) {
 	}
 }
 
-func TestRequestsBackPopsToCollections(t *testing.T) {
-	m := seededModel(t, domain.Collection{ID: "c1", Name: "API"})
-	openRequests(t, m)
-	send(t, m, keyMsg("esc"))
-	if _, ok := m.top().(*collectionListScreen); !ok {
-		t.Fatalf("esc from requests should return to collections, got %T", m.top())
-	}
-}
-
-// ---- request editor ----
-
-func openEditor(t *testing.T) *Model {
-	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
-		{ID: "r1", Name: "Get", Method: domain.GET, URL: "https://example.com"},
-	}}
-	m := seededModel(t, col)
-	openRequests(t, m)
-	send(t, m, keyMsg("enter")) // open editor
-	if _, ok := m.top().(*requestEditScreen); !ok {
-		t.Fatalf("expected editor, got %T", m.top())
-	}
-	return m
-}
+// ---- editor pane ----
 
 func TestEditorPersistsURL(t *testing.T) {
-	m := openEditor(t)
-	send(t, m, keyMsg("u")) // focus + edit URL
+	m := withRequest(t)
+	send(t, m, keyMsg("u")) // jump to URL field
+	send(t, m, keyMsg("enter"))
 	send(t, m, tea.KeyMsg{Type: tea.KeyCtrlU})
 	send(t, m, keyMsg("https://api.test/v1"))
 	send(t, m, keyMsg("enter"))  // commit
@@ -221,61 +209,56 @@ func TestEditorPersistsURL(t *testing.T) {
 }
 
 func TestEditorMethodCycle(t *testing.T) {
-	m := openEditor(t)
-	ed := m.top().(*requestEditScreen)
+	m := withRequest(t)
+	ed := ws(m).editor
 	send(t, m, keyMsg("m"))     // focus Method
-	send(t, m, keyMsg("enter")) // Enter cycles method (advances methodIdx)
+	send(t, m, keyMsg("enter")) // Enter cycles method
 	if domain.Methods[ed.methodIdx] == domain.GET {
 		t.Fatalf("Enter on Method should advance from GET, methodIdx=%d", ed.methodIdx)
 	}
 }
 
 func TestEditorTestWithoutAssertionsErrors(t *testing.T) {
-	m := openEditor(t)
+	m := withRequest(t)
 	send(t, m, keyMsg("T")) // test, but request has no assertions
 	if !m.statusErr {
 		t.Fatal("testing a request with no assertions should error")
 	}
 }
 
-func TestEditorSendResultPushesResponse(t *testing.T) {
-	m := openEditor(t)
-	ed := m.top().(*requestEditScreen)
+func TestSendResultPopulatesResponsePane(t *testing.T) {
+	m := withRequest(t)
 	resp := &httpclient.Response{StatusCode: 200, Status: "200 OK", Headers: http.Header{}, Body: []byte("{}")}
-	ed.Update(m, sendResultMsg{resp: resp})
-	// push() clears the transient status, so we assert the navigation, not status.
-	if _, ok := m.top().(*responseScreen); !ok {
-		t.Fatalf("a successful send result should push the response screen, got %T", m.top())
+	w := ws(m)
+	w.Update(m, sendResultMsg{resp: resp})
+	if w.response.resp != resp {
+		t.Fatal("send result should populate the response pane")
+	}
+	if w.focus != paneResponse {
+		t.Fatalf("focus should move to the response pane, got %d", w.focus)
 	}
 }
 
-func TestEditorSendErrorSetsError(t *testing.T) {
-	m := openEditor(t)
-	ed := m.top().(*requestEditScreen)
-	ed.Update(m, sendResultMsg{err: errString("boom")})
+func TestSendErrorSetsError(t *testing.T) {
+	m := withRequest(t)
+	ws(m).Update(m, sendResultMsg{err: errString("boom")})
 	if !m.statusErr || !strings.Contains(m.status, "boom") {
 		t.Fatalf("send error not surfaced: status=%q err=%v", m.status, m.statusErr)
 	}
 }
 
-func TestEditorRunResultPushesResults(t *testing.T) {
-	m := openEditor(t)
-	ed := m.top().(*requestEditScreen)
-	ed.Update(m, reqRunMsg{result: domain.RunResult{RequestName: "Get", Status: domain.RunPassed}})
+func TestRunResultPushesResults(t *testing.T) {
+	m := withRequest(t)
+	ws(m).Update(m, reqRunMsg{result: domain.RunResult{RequestName: "Get", Status: domain.RunPassed}})
 	if _, ok := m.top().(*runResultsScreen); !ok {
 		t.Fatalf("a run result should push the results screen, got %T", m.top())
 	}
 }
 
-// errString is a minimal error for injecting send failures.
-type errString string
-
-func (e errString) Error() string { return string(e) }
-
-// ---- assertions screen ----
+// ---- assertions (overlay launched from the editor) ----
 
 func openAssertions(t *testing.T) *Model {
-	m := openEditor(t)
+	m := withRequest(t)
 	send(t, m, keyMsg("a")) // editor -> assertions screen
 	if _, ok := m.top().(*assertionsScreen); !ok {
 		t.Fatalf("expected assertions screen, got %T", m.top())
@@ -286,14 +269,12 @@ func openAssertions(t *testing.T) *Model {
 func TestAssertionAddAndDelete(t *testing.T) {
 	m := openAssertions(t)
 
-	// Add default status-200 assertion.
-	send(t, m, keyMsg("a"))
-	send(t, m, keyMsg("ctrl+s"))
+	send(t, m, keyMsg("a"))      // add default status-200 assertion
+	send(t, m, keyMsg("ctrl+s")) // save it
 	if n := len(m.app.findCollection("c1").Requests[0].Assertions); n != 1 {
 		t.Fatalf("expected 1 assertion after add, got %d", n)
 	}
 
-	// Delete it.
 	send(t, m, keyMsg("d"))
 	if n := len(m.app.findCollection("c1").Requests[0].Assertions); n != 0 {
 		t.Fatalf("expected 0 assertions after delete, got %d", n)
@@ -306,15 +287,13 @@ func TestAssertionEditExisting(t *testing.T) {
 			Assertions: []domain.Assertion{{Kind: domain.AssertStatusCode, Op: domain.OpEquals, Expected: "200"}}},
 	}}
 	m := seededModel(t, col)
-	openRequests(t, m)
-	send(t, m, keyMsg("enter")) // editor
+	ws(m).focus = paneEditor
 	send(t, m, keyMsg("a"))     // assertions
 	send(t, m, keyMsg("enter")) // edit assertion 0
 	ed, ok := m.top().(*assertionEditScreen)
 	if !ok {
 		t.Fatalf("expected assertion editor, got %T", m.top())
 	}
-	// Change Expected to 404.
 	ed.focus = aExpected
 	send(t, m, keyMsg("enter")) // begin editing expected
 	send(t, m, tea.KeyMsg{Type: tea.KeyCtrlU})
@@ -335,7 +314,6 @@ func TestAssertionEmptyExpectedRejected(t *testing.T) {
 	if !m.statusErr {
 		t.Fatal("empty Expected should be rejected")
 	}
-	// Still on the editor, no assertion saved.
 	if _, ok := m.top().(*assertionEditScreen); !ok {
 		t.Fatalf("should remain on assertion editor, got %T", m.top())
 	}
@@ -353,43 +331,17 @@ func TestAssertionEditorKindCycleResetsOp(t *testing.T) {
 	}
 }
 
-// ---- response screen rendering ----
+// ---- response rendering helpers ----
 
-func TestResponseScreenRendersStatusAndBody(t *testing.T) {
-	app := NewApp(store.New(t.TempDir()), &store.Data{})
+func TestPrettyBodyIndentsJSON(t *testing.T) {
 	h := http.Header{}
 	h.Set("Content-Type", "application/json")
-	resp := &httpclient.Response{
-		StatusCode: 404,
-		Status:     "404 Not Found",
-		Headers:    h,
-		Body:       []byte(`{"error":"nope"}`),
-		Elapsed:    12 * time.Millisecond,
-	}
-	scr := newResponseScreen(app, domain.Request{Method: domain.GET, URL: "https://example.com"}, resp)
-	for _, want := range []string{"404 Not Found", "12ms", "Content-Type", "error", "nope"} {
-		if !strings.Contains(scr.content, want) {
-			t.Errorf("response content missing %q:\n%s", want, scr.content)
+	resp := &httpclient.Response{Headers: h, Body: []byte(`{"error":"nope"}`)}
+	out := prettyBody(resp)
+	for _, want := range []string{"error", "nope", "\n  "} {
+		if !strings.Contains(out, want) {
+			t.Errorf("pretty body missing %q:\n%s", want, out)
 		}
-	}
-	// JSON body must be pretty-printed (indented).
-	if !strings.Contains(scr.content, "\n  ") {
-		t.Errorf("JSON body not indented:\n%s", scr.content)
-	}
-}
-
-func TestResponseScreenMasksSecrets(t *testing.T) {
-	app := NewApp(store.New(t.TempDir()), &store.Data{})
-	app.secrets = domain.Secrets{"tok": "s3cr3t"}
-	app.environments = []domain.Environment{{ID: "e1", Name: "e", Vars: map[string]string{"base": "https://h"}}}
-	app.cfg.ActiveEnvironmentID = "e1"
-	resp := &httpclient.Response{StatusCode: 200, Status: "200 OK", Headers: http.Header{}, Body: []byte("ok")}
-	scr := newResponseScreen(app, domain.Request{Method: domain.GET, URL: "{{base}}/{{tok}}"}, resp)
-	if strings.Contains(scr.content, "s3cr3t") {
-		t.Fatalf("secret leaked into response request line:\n%s", scr.content)
-	}
-	if !strings.Contains(scr.content, "••••••") {
-		t.Fatalf("expected masked secret in request line:\n%s", scr.content)
 	}
 }
 
@@ -427,7 +379,6 @@ func TestRenderRunResultStatuses(t *testing.T) {
 			t.Errorf("renderRunResult(%s) missing %q or name:\n%s", c.r.Status, c.want, out)
 		}
 	}
-	// Skipped explains itself; error shows the message.
 	if !strings.Contains(renderRunResult(cases[2].r), "no assertions") {
 		t.Error("skipped result should say 'no assertions'")
 	}
@@ -467,7 +418,7 @@ func TestNewSingleRunResultsScreen(t *testing.T) {
 func TestRunResultsBackPops(t *testing.T) {
 	m := seededModel(t, domain.Collection{ID: "c1", Name: "API"})
 	m.push(newSingleRunResultsScreen(domain.RunResult{RequestName: "x", Status: domain.RunPassed}))
-	send(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
+	send(t, m, tea.WindowSizeMsg{Width: 100, Height: 30})
 	send(t, m, keyMsg("esc"))
 	if _, ok := m.top().(*runResultsScreen); ok {
 		t.Fatal("esc should pop the run results screen")

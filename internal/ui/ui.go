@@ -48,4 +48,28 @@ var (
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(ColorMuted).
 		Padding(0, 1)
+
+	// Pane is the border around an unfocused workspace pane.
+	Pane = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorMuted)
+
+	// PaneFocused is the border around the focused workspace pane.
+	PaneFocused = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorAccent)
+
+	// PaneTitle / PaneTitleFocused label a pane's content.
+	PaneTitle        = lipgloss.NewStyle().Foreground(ColorMuted).Bold(true)
+	PaneTitleFocused = lipgloss.NewStyle().Foreground(ColorAccent).Bold(true)
+
+	// TabActive / TabInactive render a pane's tab strip.
+	TabActive   = lipgloss.NewStyle().Foreground(lipgloss.Color("230")).Background(ColorAccent).Padding(0, 1).Bold(true)
+	TabInactive = lipgloss.NewStyle().Foreground(ColorMuted).Padding(0, 1)
+
+	// Method renders the HTTP method chip in the top bar.
+	Method = lipgloss.NewStyle().Foreground(lipgloss.Color("230")).Background(ColorAccent).Padding(0, 1).Bold(true)
+
+	// SendButton renders the Send affordance in the top bar.
+	SendButton = lipgloss.NewStyle().Foreground(lipgloss.Color("230")).Background(ColorGood).Padding(0, 1).Bold(true)
 )

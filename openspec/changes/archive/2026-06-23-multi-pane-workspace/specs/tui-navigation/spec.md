@@ -37,8 +37,10 @@ workspace rather than by pushing a new screen per step.
 - **THEN** the system returns to the workspace without losing unsaved-prompt context
 
 #### Scenario: Quit the application
-- **WHEN** the user presses the quit key (e.g. q or Ctrl+C) from the workspace
-- **THEN** the system exits cleanly
+- **WHEN** the user presses the soft-quit key (`q`) from the workspace with no
+  unsaved editor changes, or presses the hard-quit key (`Ctrl+C`) at any time
+- **THEN** the system exits cleanly; `Ctrl+C` is never intercepted by an
+  unsaved-changes guard
 
 #### Scenario: Distinguish edit mode from navigation mode
 - **WHEN** the user is editing a text field

@@ -13,7 +13,6 @@ import (
 	"github.com/gabriel-ballesteros/termipost/internal/domain"
 	"github.com/gabriel-ballesteros/termipost/internal/httpclient"
 	"github.com/gabriel-ballesteros/termipost/internal/ui"
-	"github.com/gabriel-ballesteros/termipost/internal/vars"
 )
 
 type respTab int
@@ -152,11 +151,4 @@ func renderTabs(names []string, active int, focused bool) string {
 		}
 	}
 	return strings.Join(parts, "")
-}
-
-// maskedRequestLine renders a request's resolved, secret-masked method+URL.
-func maskedRequestLine(app *App, req domain.Request) string {
-	resolvedURL, _ := app.Resolver().Resolve(req.URL)
-	masked := vars.Mask(resolvedURL, app.secrets)
-	return ui.Label.Render("Request: ") + ui.Value.Render(string(req.Method)+" "+masked)
 }

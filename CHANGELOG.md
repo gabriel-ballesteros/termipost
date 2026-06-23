@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.2.2) - 2026-06-22
+
+Internal only — no user-facing changes to the `termipost` binary.
+
+### Changed
+
+- Bumped GitHub Actions to their Node 24 runtimes (`actions/checkout` v4→v7,
+  `actions/setup-go` v5→v6, `goreleaser/goreleaser-action` v6→v7), resolving the
+  Node 20 deprecation warning on the runners.
+- Added a branch-policy workflow that enforces, as a required status check, which
+  source branches may open a pull request: into `main` from `release/X.Y.Z` or
+  `hotfix/*`; into `develop` from `main` or `feature|fix|chore|docs|refactor/*`.
+
 ## [1.2.1](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.2.1) - 2026-06-22
 
 Internal only — no user-facing changes to the `termipost` binary.

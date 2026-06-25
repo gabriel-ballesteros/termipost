@@ -9,6 +9,7 @@ import (
 
 	"github.com/gabriel-ballesteros/termipost/internal/domain"
 	"github.com/gabriel-ballesteros/termipost/internal/httpclient"
+	"github.com/gabriel-ballesteros/termipost/internal/syntax"
 	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
@@ -33,7 +34,7 @@ func prettyBody(resp *httpclient.Response) string {
 	if strings.Contains(ct, "json") || looksLikeJSON(body) {
 		var out bytes.Buffer
 		if err := json.Indent(&out, body, "", "  "); err == nil {
-			return out.String()
+			return syntax.HighlightJSON(out.String())
 		}
 	}
 	return string(body)
@@ -49,7 +50,11 @@ func bodyPreview(body string) string {
 	if strings.TrimSpace(body) == "" {
 		return ui.Subtle.Render("(empty — press enter to edit)")
 	}
-	lines := strings.Split(body, "\n")
+	shown := body
+	if looksLikeJSON([]byte(body)) {
+		shown = syntax.HighlightJSON(body)
+	}
+	lines := strings.Split(shown, "\n")
 	if len(lines) > 6 {
 		lines = append(lines[:6], "…")
 	}

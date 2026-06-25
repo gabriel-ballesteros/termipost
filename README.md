@@ -25,6 +25,10 @@ without leaving the screen.
 - **Collections** — group related requests; create, rename, delete.
 - **Requests** — set method, URL, headers, query params, and body; send and view
   the formatted response (status, headers, pretty-printed JSON body, timing).
+- **Body editing** — request and response bodies are syntax-highlighted as JSON.
+  Prettify a request body in place with `ctrl+f` (it validates the JSON and
+  reports the line/column of any error), with live valid/invalid feedback as you
+  type a JSON body.
 - **Tests** — attach assertions (status code, header, body, latency) to a
   request and run it as a test. Run a whole collection to get an aggregate
   pass/fail/skip summary. A "test" is just a request with assertions.

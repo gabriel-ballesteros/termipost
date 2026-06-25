@@ -1,33 +1,4 @@
-# request-management Specification
-
-## Purpose
-Create, edit, delete, run, and substitute variables in HTTP requests within collections, and view their responses.
-## Requirements
-### Requirement: Create and edit requests
-The system SHALL allow the user to create and edit an HTTP request within a collection, specifying the HTTP method, URL, headers, query parameters, and body.
-
-#### Scenario: Create a new request
-- **WHEN** the user creates a request inside a collection and provides a name, method, and URL
-- **THEN** the system adds the request to the collection and persists it
-
-#### Scenario: Edit request fields
-- **WHEN** the user edits a request's method, URL, headers, query parameters, or body
-- **THEN** the system saves the updated values to the request
-
-#### Scenario: Select HTTP method
-- **WHEN** the user changes the method field
-- **THEN** the system offers the standard HTTP methods (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS) for selection
-
-#### Scenario: Edit headers as key/value pairs
-- **WHEN** the user adds, edits, or removes a header entry
-- **THEN** the system stores headers as key/value pairs on the request
-
-### Requirement: Delete request
-The system SHALL allow the user to delete a request from a collection after confirmation.
-
-#### Scenario: Confirmed request deletion
-- **WHEN** the user deletes a request and confirms
-- **THEN** the system removes the request from the collection and from disk
+## MODIFIED Requirements
 
 ### Requirement: Run request and view response
 The system SHALL provide a run action that sends the configured HTTP request and displays the response status code, headers, body, and elapsed time. Running a request SHALL be independent of assertions — it does not require any to be defined and does not evaluate them (see the api-testing capability for the separate test action).
@@ -56,17 +27,6 @@ The system SHALL provide a run action that sends the configured HTTP request and
 - **WHEN** the user triggers the copy action while viewing a response
 - **THEN** the system copies the raw (unformatted) response body to the system clipboard and confirms the copy
 - **AND** the copy action does not use Ctrl+C, which is reserved for quitting
-
-### Requirement: Variable substitution
-The system SHALL substitute variables referenced in request URL, headers, query parameters, and body before sending, resolving each `{{name}}` reference against the active environment and then the global secrets store (see the environment-management capability for resolution rules).
-
-#### Scenario: Substitute a defined variable
-- **WHEN** a request field references a variable using the `{{name}}` syntax and that name resolves from the active environment or secrets
-- **THEN** the system replaces the reference with the resolved value before sending
-
-#### Scenario: Undefined variable
-- **WHEN** a request field references a variable that resolves from neither the active environment nor secrets
-- **THEN** the system leaves the reference unresolved and warns the user before or after sending
 
 ### Requirement: Navigate and activate request editor fields
 In the request editor, every field — including Assertions — SHALL be reachable with the arrow/Tab keys and activatable with Enter, and each field SHALL additionally have a single-letter shortcut that jumps to it and activates it in one keystroke. The Body field SHALL additionally offer a prettify action that formats and validates its JSON content (see the payload-formatting capability).
@@ -98,4 +58,3 @@ In the request editor, every field — including Assertions — SHALL be reachab
 #### Scenario: Live validity while editing the body
 - **WHEN** the user is editing the Body field and its content looks like JSON
 - **THEN** the system shows a live valid/invalid indicator and inline parse error as the content changes (see the payload-formatting capability)
-

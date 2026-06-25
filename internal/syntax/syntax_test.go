@@ -49,6 +49,14 @@ func TestValidateJSONInvalid(t *testing.T) {
 		`"unterminated`,
 		`"bad \x escape"`,
 		`"bad \u00gz"`,
+		"\"raw\ncontrol\"", // literal control character inside a string
+		`"\`,               // unterminated escape at end of input
+		`"\u00"`,           // \u escape truncated by end of input
+		`[1 2]`,            // missing comma between array elements
+		`{"a":1 "b":2}`,    // missing comma between object members
+		`-x`,               // bogus number
+		`1.2e`,             // exponent with no digits
+		`1.2e+`,            // exponent sign with no digits
 		`{} extra`,
 		`{"a":1} {"b":2}`,
 		`nul`,

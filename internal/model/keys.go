@@ -17,6 +17,7 @@ var keys = struct {
 	Window                key.Binding
 	TabNext, TabPrev      key.Binding
 	Prettify              key.Binding
+	Fold                  key.Binding
 }{
 	Up:    key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
 	Down:  key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
@@ -46,4 +47,5 @@ var keys = struct {
 	TabNext:   key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next tab")),
 	TabPrev:   key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev tab")),
 	Prettify:  key.NewBinding(key.WithKeys("ctrl+f"), key.WithHelp("ctrl+f", "prettify")),
+	Fold:      key.NewBinding(key.WithKeys(" "), key.WithHelp("space", "fold/expand")),
 }

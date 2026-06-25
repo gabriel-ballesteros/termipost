@@ -51,6 +51,7 @@ type editorPane struct {
 	name      textinput.Model
 	url       textinput.Model
 	body      textarea.Model
+	bodyFold  foldView
 	methodIdx int
 	headers   *kvEditor
 	query     *kvEditor
@@ -79,6 +80,7 @@ func (p *editorPane) load(collID, reqID string) {
 	p.name.SetValue(r.Name)
 	p.url.SetValue(r.URL)
 	p.body.SetValue(r.Body)
+	p.bodyFold.setJSON(r.Body)
 	p.methodIdx = 0
 	for i, mth := range domain.Methods {
 		if mth == r.Method {
@@ -259,10 +261,26 @@ func (p *editorPane) key(m *Model, msg tea.KeyMsg) tea.Cmd {
 	case etQuery:
 		return p.query.update(m, msg)
 	case etBody:
-		if msg.String() == "enter" || msg.String() == "i" {
+		switch msg.String() {
+		case "enter", "i":
 			p.editFld = true
 			p.body.Focus()
 			return textarea.Blink
+		case "up", "k":
+			if p.bodyFold.foldable {
+				p.bodyFold.moveUp()
+			}
+			return nil
+		case "down", "j":
+			if p.bodyFold.foldable {
+				p.bodyFold.moveDown()
+			}
+			return nil
+		case " ":
+			if p.bodyFold.foldable {
+				p.bodyFold.toggle()
+			}
+			return nil
 		}
 	}
 	return nil
@@ -363,7 +381,7 @@ func (p *editorPane) View(m *Model, w, h int, focused bool) string {
 	case etQuery:
 		body = p.query.view(w, h-2, focused)
 	case etBody:
-		body = p.viewBodyTab(w, h-2)
+		body = p.viewBodyTab(w, h-2, focused)
 	}
 	return tabs + dirt + "\n" + body
 }
@@ -400,11 +418,17 @@ func (p *editorPane) fieldText(f int, fallback string) string {
 	return fallback
 }
 
-func (p *editorPane) viewBodyTab(w, h int) string {
+func (p *editorPane) viewBodyTab(w, h int, focused bool) string {
 	if p.editFld && p.tab == etBody {
 		p.body.SetWidth(min(w, 80))
 		p.body.SetHeight(max(h-2, 3))
 		return p.body.View() + "\n" + p.bodyValidity()
+	}
+	// Foldable JSON gets the navigable fold view; everything else keeps the plain
+	// truncated preview.
+	if p.bodyFold.setJSON(p.body.Value()) {
+		rows, cursorRow := p.bodyFold.renderLines(focused)
+		return strings.Join(windowRows(rows, cursorRow, h), "\n")
 	}
 	return ui.Box.Render(bodyPreview(p.body.Value()))
 }
@@ -456,6 +480,9 @@ func (p *editorPane) HelpBindings() []key.Binding {
 		key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "assertions"))}
 	if p.tab == etBody {
 		b = append(b, keys.Prettify)
+		if p.bodyFold.foldable {
+			b = append(b, keys.Fold)
+		}
 	}
 	return b
 }

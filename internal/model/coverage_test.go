@@ -113,7 +113,7 @@ func TestResponsePaneStatusBadgeAndContent(t *testing.T) {
 	if !strings.Contains(p.statusBadge(), "no response") {
 		t.Fatal("nil response should report no response")
 	}
-	if !strings.Contains(p.content(), "No response yet") {
+	if !strings.Contains(p.content(false), "No response yet") {
 		t.Fatal("empty content should hint to send")
 	}
 
@@ -132,11 +132,11 @@ func TestResponsePaneStatusBadgeAndContent(t *testing.T) {
 		}
 		// Body tab content is the pretty body; Headers tab lists the header.
 		p.tab = rtBody
-		if !strings.Contains(p.content(), "a") {
+		if !strings.Contains(p.content(false), "a") {
 			t.Fatal("body content missing")
 		}
 		p.tab = rtHeaders
-		if !strings.Contains(p.content(), "Content-Type") {
+		if !strings.Contains(p.content(false), "Content-Type") {
 			t.Fatal("headers content missing")
 		}
 	}

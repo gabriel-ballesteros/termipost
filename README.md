@@ -75,8 +75,12 @@ make run        # build and run in one step
 
 ## Data location
 
-All data is stored as human-readable JSON under your OS config dir
-(`~/.config/termipost` on Linux/macOS, falling back to `~/.termipost`):
+All data is stored as human-readable JSON under your OS config dir, falling
+back to `~/.termipost` if that can't be resolved:
+
+- Linux: `~/.config/termipost` (or `$XDG_CONFIG_HOME/termipost`)
+- macOS: `~/Library/Application Support/termipost`
+- Windows: `%AppData%\termipost` (e.g. `C:\Users\<you>\AppData\Roaming\termipost`)
 
 ```
 config.json              app settings + active environment
@@ -92,17 +96,22 @@ skipped rather than overwritten.
 ## Keys (high level)
 
 - `↑/↓` or `j/k` to move, `enter` to open, `esc` to go back, `q` to quit.
-- Lists: `n` new, `r` rename, `d` delete.
-- Collections: `R` run all tests, `e` environments.
+- Collection/environment lists: `n` new, `r` rename, `d` delete; in the
+  collection tree `x` runs the whole collection.
+- Value editors (params, headers, secrets, assertions): `a` add, `e` edit,
+  `d` delete.
+- Workspace (request editor): `ctrl+w h/j/k/l` focus a pane, `shift+r` run
+  (send and show the response, ignoring assertions), `shift+t` test (send and
+  check assertions), `ctrl+s` save, `E` environments.
 - Request editor: `tab`/`↑↓` to move between fields (including Assertions),
-  `enter` to edit/open the focused field, `←/→` to cycle the method. Jump
-  straight to a field with its first letter — `n` name, `m` method, `u` url,
-  `h` headers, `p` params, `b` body, `a` assertions. Then `R` run (send and show
-  the response, ignoring assertions), `T` test (send and check assertions),
-  `ctrl+s` save.
-- Response view: `↑/↓` scroll, `c` (or `y`) copy the body to the clipboard
-  (`ctrl+c` is reserved for quit), `esc` back.
+  `enter` to edit/open the focused field, `←/→` to cycle the method, `[`/`]`
+  to switch tabs. Jump straight to a field with its first letter — `n` name,
+  `m` method, `u` url, `h` headers, `p` params, `b` body, `a` assertions. On the
+  body field, `ctrl+f` prettifies and `space` folds/expands JSON sections.
+- Response view: `↑/↓` scroll, `[`/`]` switch tabs, `c` (or `y`) copy the body
+  to the clipboard (`ctrl+c` is reserved for quit), `space` fold/expand JSON.
 - Environments: `a` set active, `enter` edit variables, `s` secrets.
+- Secrets: `a` add, `e` edit, `d` delete, `v` reveal/hide.
 
 The bottom action bar always lists the keys for the current screen.
 

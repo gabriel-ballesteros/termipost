@@ -196,6 +196,89 @@ func TestFoldRowRangeAccountsForWrap(t *testing.T) {
 	}
 }
 
+func TestFoldMoveUp(t *testing.T) {
+	f := seedFold(t, nestedJSON)
+	f.cursor = 2
+	f.moveUp()
+	if f.cursor != 1 {
+		t.Fatalf("moveUp from 2 should land on 1, got %d", f.cursor)
+	}
+	f.cursor = 0
+	f.moveUp() // already at top, stays
+	if f.cursor != 0 {
+		t.Fatalf("moveUp at top should stay at 0, got %d", f.cursor)
+	}
+}
+
+func TestFoldMovesAndTogglesAreNoOpWhenNotFoldable(t *testing.T) {
+	f := seedFold(t, "plain text body")
+	if f.foldable {
+		t.Fatal("non-JSON must not be foldable")
+	}
+	// None of these should panic or mutate state.
+	f.moveUp()
+	f.moveDown()
+	f.toggle()
+	if len(f.collapsed) != 0 || f.cursor != 0 {
+		t.Fatalf("non-foldable view should stay inert (collapsed=%v cursor=%d)", f.collapsed, f.cursor)
+	}
+}
+
+func TestFoldHiddenCursorSnapsBack(t *testing.T) {
+	f := seedFold(t, nestedJSON)
+	f.collapsed[0] = true // only line 0 visible
+	f.cursor = 2          // pointing at a now-hidden line
+	f.moveDown()          // cursorPos must snap to the only visible line
+	if f.cursor != 0 {
+		t.Fatalf("hidden cursor should snap to a visible line, got %d", f.cursor)
+	}
+}
+
+func TestFoldRowRangeHiddenCursorAndZeroWidth(t *testing.T) {
+	f := seedFold(t, nestedJSON)
+	// Zero width: wrapHeight floors at 1 row.
+	top, bottom := f.rowRange(0)
+	if top != 0 || bottom != 0 {
+		t.Fatalf("cursor on line 0 at width 0 should be rows (0,0), got (%d,%d)", top, bottom)
+	}
+	// Cursor hidden inside a collapsed section -> not found among visible lines.
+	f.collapsed[0] = true
+	f.cursor = 2
+	if top, bottom := f.rowRange(80); top != 0 || bottom != 0 {
+		t.Fatalf("hidden cursor row range should be (0,0), got (%d,%d)", top, bottom)
+	}
+}
+
+func TestWindowRows(t *testing.T) {
+	rows := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	// Fits: returned unchanged.
+	if got := windowRows(rows, 3, 20); len(got) != len(rows) {
+		t.Fatalf("rows fitting height should be unchanged, got %d", len(got))
+	}
+	// h <= 0: unchanged.
+	if got := windowRows(rows, 3, 0); len(got) != len(rows) {
+		t.Fatalf("non-positive height should return all rows, got %d", len(got))
+	}
+	cases := []struct {
+		cursor    int
+		wantFirst string
+		wantLast  string
+	}{
+		{0, "0", "3"}, // clamp to start
+		{5, "3", "6"}, // centered
+		{9, "6", "9"}, // clamp to end
+	}
+	for _, c := range cases {
+		got := windowRows(rows, c.cursor, 4)
+		if len(got) != 4 {
+			t.Fatalf("cursor %d: window len = %d, want 4", c.cursor, len(got))
+		}
+		if got[0] != c.wantFirst || got[len(got)-1] != c.wantLast {
+			t.Errorf("cursor %d: window = %v, want first %q last %q", c.cursor, got, c.wantFirst, c.wantLast)
+		}
+	}
+}
+
 func TestFoldCacheResetsOnChange(t *testing.T) {
 	f := seedFold(t, nestedJSON)
 	f.collapsed[0] = true

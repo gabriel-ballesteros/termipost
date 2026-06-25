@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.4.0) - 2026-06-25
+
+### Added
+
+- JSON syntax highlighting for request and response bodies, colouring keys,
+  string values, numbers, boolean/null literals, and punctuation. Non-JSON and
+  malformed content fall back to plain text.
+- Prettify action (`ctrl+f`) on the request body that re-indents valid JSON in
+  place, with live valid/invalid feedback and line/column error locations while
+  editing JSON-looking bodies.
+- Section collapsing for the read-only request and response body views: every
+  multi-line JSON object/array at any depth is foldable via a left gutter
+  (`-` expanded, `+` collapsed). A line cursor (`↑`/`↓`) navigates visible lines
+  and `space` toggles the section under the cursor; collapsed sections render as
+  `{ … }` / `[ … ]`. Folding is view-only and never alters the stored body.
+
 ## [1.3.0](https://github.com/gabriel-ballesteros/termipost/releases/tag/v1.3.0) - 2026-06-23
 
 ### Added

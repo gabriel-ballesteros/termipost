@@ -11,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/gabriel-ballesteros/termipost/internal/domain"
+	"github.com/gabriel-ballesteros/termipost/internal/syntax"
 	"github.com/gabriel-ballesteros/termipost/internal/ui"
 )
 
@@ -50,6 +51,7 @@ type editorPane struct {
 	name      textinput.Model
 	url       textinput.Model
 	body      textarea.Model
+	bodyFold  foldView
 	methodIdx int
 	headers   *kvEditor
 	query     *kvEditor
@@ -78,6 +80,7 @@ func (p *editorPane) load(collID, reqID string) {
 	p.name.SetValue(r.Name)
 	p.url.SetValue(r.URL)
 	p.body.SetValue(r.Body)
+	p.bodyFold.setJSON(r.Body)
 	p.methodIdx = 0
 	for i, mth := range domain.Methods {
 		if mth == r.Method {
@@ -196,6 +199,11 @@ func (p *editorPane) key(m *Model, msg tea.KeyMsg) tea.Cmd {
 	if !p.loaded {
 		return nil
 	}
+	// Prettify works on the Body tab in both navigation and edit mode; it uses a
+	// chord (ctrl+f) so it never collides with text input.
+	if p.tab == etBody && key.Matches(msg, keys.Prettify) {
+		return p.prettifyBody(m)
+	}
 	// Inline KV editors own input while active.
 	if p.tab == etHeaders && p.headers.editing {
 		return p.headers.update(m, msg)
@@ -253,10 +261,26 @@ func (p *editorPane) key(m *Model, msg tea.KeyMsg) tea.Cmd {
 	case etQuery:
 		return p.query.update(m, msg)
 	case etBody:
-		if msg.String() == "enter" || msg.String() == "i" {
+		switch msg.String() {
+		case "enter", "i":
 			p.editFld = true
 			p.body.Focus()
 			return textarea.Blink
+		case "up", "k":
+			if p.bodyFold.foldable {
+				p.bodyFold.moveUp()
+			}
+			return nil
+		case "down", "j":
+			if p.bodyFold.foldable {
+				p.bodyFold.moveDown()
+			}
+			return nil
+		case " ":
+			if p.bodyFold.foldable {
+				p.bodyFold.toggle()
+			}
+			return nil
 		}
 	}
 	return nil
@@ -357,7 +381,7 @@ func (p *editorPane) View(m *Model, w, h int, focused bool) string {
 	case etQuery:
 		body = p.query.view(w, h-2, focused)
 	case etBody:
-		body = p.viewBodyTab(w, h-2)
+		body = p.viewBodyTab(w, h-2, focused)
 	}
 	return tabs + dirt + "\n" + body
 }
@@ -394,21 +418,71 @@ func (p *editorPane) fieldText(f int, fallback string) string {
 	return fallback
 }
 
-func (p *editorPane) viewBodyTab(w, h int) string {
+func (p *editorPane) viewBodyTab(w, h int, focused bool) string {
 	if p.editFld && p.tab == etBody {
 		p.body.SetWidth(min(w, 80))
-		p.body.SetHeight(max(h-1, 3))
-		return p.body.View()
+		p.body.SetHeight(max(h-2, 3))
+		return p.body.View() + "\n" + p.bodyValidity()
+	}
+	// Foldable JSON gets the navigable fold view; everything else keeps the plain
+	// truncated preview.
+	if p.bodyFold.setJSON(p.body.Value()) {
+		rows, cursorRow := p.bodyFold.renderLines(focused)
+		return strings.Join(windowRows(rows, cursorRow, h), "\n")
 	}
 	return ui.Box.Render(bodyPreview(p.body.Value()))
+}
+
+// prettifyBody formats and validates the JSON body in place. On a parse error the
+// body is left untouched and the error is surfaced; otherwise the formatted body
+// replaces the current one (marking the request dirty if it changed).
+func (p *editorPane) prettifyBody(m *Model) tea.Cmd {
+	cur := p.body.Value()
+	out, err := syntax.Prettify(cur)
+	if err != nil {
+		m.setError("Invalid JSON: " + err.Error())
+		return nil
+	}
+	if out != cur {
+		p.body.SetValue(out)
+		m.setStatus("Body prettified")
+	} else {
+		m.setStatus("Body already formatted")
+	}
+	return nil
+}
+
+// bodyValidity returns a live valid/invalid indicator for the body while editing.
+// It is gated on JSON-looking content so plain-text or form bodies show nothing.
+func (p *editorPane) bodyValidity() string {
+	v := p.body.Value()
+	if !looksLikeJSON([]byte(v)) {
+		return ""
+	}
+	if ok, err := syntax.ValidateJSON(v); ok {
+		return ui.Good.Render("✓ valid JSON")
+	} else {
+		return ui.Bad.Render("✗ " + err.Error())
+	}
 }
 
 func (p *editorPane) Title() string { return "Request" }
 
 func (p *editorPane) HelpBindings() []key.Binding {
 	if p.editing() {
-		return []key.Binding{key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "stop editing"))}
+		b := []key.Binding{key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "stop editing"))}
+		if p.tab == etBody {
+			b = append(b, keys.Prettify)
+		}
+		return b
 	}
-	return []key.Binding{keys.Tab, keys.Enter, keys.TabPrev, keys.TabNext,
+	b := []key.Binding{keys.Tab, keys.Enter, keys.TabPrev, keys.TabNext,
 		key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "assertions"))}
+	if p.tab == etBody {
+		b = append(b, keys.Prettify)
+		if p.bodyFold.foldable {
+			b = append(b, keys.Fold)
+		}
+	}
+	return b
 }

@@ -361,6 +361,74 @@ func TestPrettyBodyNonJSON(t *testing.T) {
 	}
 }
 
+// ---- body prettify + live validation (payload-formatting) ----
+
+// editorOf seeds a model with one request and returns its loaded editor pane.
+func editorOf(t *testing.T, body string) (*Model, *editorPane) {
+	t.Helper()
+	col := domain.Collection{ID: "c1", Name: "API", Requests: []domain.Request{
+		{ID: "r1", Name: "First", Method: domain.POST, URL: "https://a", Body: body},
+	}}
+	m := seededModel(t, col)
+	w := ws(m)
+	w.selectRequest(m, "c1", "r1")
+	return m, w.editor
+}
+
+func TestPrettifyBodyFormatsValidJSON(t *testing.T) {
+	m, ed := editorOf(t, `{"a":1,"b":[2,3]}`)
+	ed.tab = etBody
+	ed.prettifyBody(m)
+	got := ed.body.Value()
+	if !strings.Contains(got, "\n  \"a\": 1") {
+		t.Fatalf("body not prettified:\n%s", got)
+	}
+	if !ed.dirty() {
+		t.Error("prettify changed the body but request is not marked dirty")
+	}
+}
+
+func TestPrettifyBodyInvalidLeavesUnchanged(t *testing.T) {
+	const bad = `{"a": }`
+	m, ed := editorOf(t, bad)
+	ed.tab = etBody
+	ed.prettifyBody(m)
+	if ed.body.Value() != bad {
+		t.Errorf("body mutated on invalid JSON: %q", ed.body.Value())
+	}
+	if !m.statusErr || !strings.Contains(m.status, "Invalid JSON") {
+		t.Errorf("expected an Invalid JSON error, got status=%q err=%v", m.status, m.statusErr)
+	}
+}
+
+func TestBodyValidityIndicator(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want string // substring; "" means no indicator
+	}{
+		{"valid", `{"a":1}`, "valid JSON"},
+		{"invalid", `{"a":`, "✗"},
+		{"non-json", "plain text", ""},
+		{"empty", "", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, ed := editorOf(t, tc.body)
+			got := ed.bodyValidity()
+			if tc.want == "" {
+				if got != "" {
+					t.Errorf("bodyValidity = %q, want empty", got)
+				}
+				return
+			}
+			if !strings.Contains(got, tc.want) {
+				t.Errorf("bodyValidity = %q, want substring %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // ---- run results screen rendering ----
 
 func TestRenderRunResultStatuses(t *testing.T) {

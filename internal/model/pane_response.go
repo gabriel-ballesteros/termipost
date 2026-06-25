@@ -35,6 +35,7 @@ type responsePane struct {
 	req  *domain.Request
 	resp *httpclient.Response
 	body []byte
+	fold foldView
 }
 
 func newResponsePane(app *App) *responsePane { return &responsePane{app: app} }
@@ -47,6 +48,7 @@ func (p *responsePane) setResponse(req *domain.Request, resp *httpclient.Respons
 	} else {
 		p.body = nil
 	}
+	p.fold.setJSON(string(p.body))
 }
 
 func (p *responsePane) editing() bool { return false }
@@ -74,6 +76,21 @@ func (p *responsePane) Update(m *Model, msg tea.Msg, focused bool) tea.Cmd {
 		}
 		return nil
 	}
+	// On a foldable JSON body, arrows drive the fold cursor and space toggles the
+	// section; PageUp/Down and mouse still scroll the viewport (handled below).
+	if p.tab == rtBody && p.fold.foldable {
+		switch km.String() {
+		case "up", "k":
+			p.fold.moveUp()
+			return nil
+		case "down", "j":
+			p.fold.moveDown()
+			return nil
+		case " ":
+			p.fold.toggle()
+			return nil
+		}
+	}
 	if p.rdy {
 		var cmd tea.Cmd
 		p.vp, cmd = p.vp.Update(msg)
@@ -97,7 +114,7 @@ func (p *responsePane) statusBadge() string {
 		ui.Subtle.Render(fmt.Sprintf("  %dms  %dB", p.resp.Elapsed.Milliseconds(), len(p.resp.Body)))
 }
 
-func (p *responsePane) content() string {
+func (p *responsePane) content(focused bool) string {
 	if p.resp == nil {
 		return ui.Subtle.Render("No response yet — press ") + ui.Value.Render("R") + ui.Subtle.Render(" to send the request.")
 	}
@@ -105,6 +122,10 @@ func (p *responsePane) content() string {
 	case rtHeaders:
 		return renderHeaders(p.resp.Headers)
 	default:
+		if p.fold.foldable {
+			rows, _ := p.fold.renderLines(focused)
+			return strings.Join(rows, "\n")
+		}
 		return prettyBody(p.resp)
 	}
 }
@@ -130,14 +151,27 @@ func (p *responsePane) View(m *Model, w, h int, focused bool) string {
 	if wrapW < 1 {
 		wrapW = 1
 	}
-	p.vp.SetContent(lipgloss.NewStyle().Width(wrapW).Render(p.content()))
+	p.vp.SetContent(lipgloss.NewStyle().Width(wrapW).Render(p.content(focused)))
+	// Keep the fold cursor inside the viewport window, accounting for soft-wrap.
+	if p.tab == rtBody && p.fold.foldable {
+		top, bottom := p.fold.rowRange(wrapW)
+		if top < p.vp.YOffset {
+			p.vp.SetYOffset(top)
+		} else if bottom >= p.vp.YOffset+p.vp.Height {
+			p.vp.SetYOffset(bottom - p.vp.Height + 1)
+		}
+	}
 	return header + "\n" + p.vp.View()
 }
 
 func (p *responsePane) Title() string { return "Response" }
 
 func (p *responsePane) HelpBindings() []key.Binding {
-	return []key.Binding{keys.Up, keys.Down, keys.TabPrev, keys.TabNext, keys.Copy}
+	b := []key.Binding{keys.Up, keys.Down, keys.TabPrev, keys.TabNext, keys.Copy}
+	if p.tab == rtBody && p.fold.foldable {
+		b = append(b, keys.Fold)
+	}
+	return b
 }
 
 // renderTabs draws a tab strip with the active index highlighted.

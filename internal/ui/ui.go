@@ -67,6 +67,13 @@ var (
 	TabActive   = lipgloss.NewStyle().Foreground(lipgloss.Color("230")).Background(ColorAccent).Padding(0, 1).Bold(true)
 	TabInactive = lipgloss.NewStyle().Foreground(ColorMuted).Padding(0, 1)
 
+	// JSON token styles for syntax highlighting of request/response bodies.
+	JSONKey     = lipgloss.NewStyle().Foreground(ColorAccent)
+	JSONString  = lipgloss.NewStyle().Foreground(ColorGood)
+	JSONNumber  = lipgloss.NewStyle().Foreground(ColorWarn)
+	JSONKeyword = lipgloss.NewStyle().Foreground(lipgloss.Color("213"))
+	JSONPunct   = lipgloss.NewStyle().Foreground(ColorMuted)
+
 	// Method renders the HTTP method chip in the top bar.
 	Method = lipgloss.NewStyle().Foreground(lipgloss.Color("230")).Background(ColorAccent).Padding(0, 1).Bold(true)
 
